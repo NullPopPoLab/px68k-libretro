@@ -291,17 +291,18 @@ static bool disk_get_image_label(unsigned index, char *label, size_t len)
 
 void attach_disk_swap_interface(void)
 {
-   dskcb_ext.set_drive_eject_state = set_drive_eject_state;
-   dskcb_ext.get_drive_eject_state = get_drive_eject_state;
-   dskcb_ext.set_image_index = set_image_index;
-   dskcb_ext.get_image_index = get_image_index;
-   dskcb_ext.get_num_drives  = get_num_drives;
-   dskcb_ext.get_num_images  = get_num_images;
-   dskcb_ext.add_image_index = add_image_index;
-   dskcb_ext.replace_image_index = replace_image_index;
-   dskcb_ext.set_initial_image = NULL;
-   dskcb_ext.get_image_path = disk_get_image_path;
-   dskcb_ext.get_image_label = disk_get_image_label;
+   memset(&dskcb,0,sizeof(dskcb));
+   dskcb.set_drive_eject_state = set_drive_eject_state;
+   dskcb.get_drive_eject_state = get_drive_eject_state;
+   dskcb.set_image_index = set_image_index;
+   dskcb.get_image_index = get_image_index;
+   dskcb.get_num_drives  = get_num_drives;
+   dskcb.get_num_images  = get_num_images;
+   dskcb.add_image_index = add_image_index;
+   dskcb.replace_image_index = replace_image_index;
+   dskcb.set_initial_image = NULL;
+   dskcb.get_image_path = disk_get_image_path;
+   dskcb.get_image_label = disk_get_image_label;
 
    environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT2_INTERFACE, &dskcb);
 }
