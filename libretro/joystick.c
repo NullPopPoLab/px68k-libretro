@@ -97,11 +97,11 @@ static DWORD get_px68k_input_bitmasks(int port)
    return input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
 }
 
-static WORD get_px68k_input(int port)
+static DWORD get_px68k_input(int port)
 {
    DWORD i = 0;
    DWORD res = 0;
-   for (i = 0; i < (RETRO_DEVICE_ID_JOYPAD_R + 1); i++)
+   for (i = 0; i < (RETRO_DEVICE_ID_JOYPAD_MENU + 1); i++)
       res |= input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, i) ? (1 << i) : 0;
    return res;
 }
@@ -141,38 +141,38 @@ void FASTCALL Joystick_Update(int is_menu, int key, int port)
 	case PAD_2BUTTON:
 		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_A))	ret0 ^= (Config.VbtnSwap ? JOY_TRG1 : JOY_TRG2);
 		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_B))	ret0 ^= (Config.VbtnSwap ? JOY_TRG2 : JOY_TRG1);
+#if 0
 		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_X))	ret0 ^= (Config.VbtnSwap ? JOY_TRG2 : JOY_TRG1);
 		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_Y))	ret0 ^= (Config.VbtnSwap ? JOY_TRG1 : JOY_TRG2);
 
 		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_START)) ret0 &= ~(JOY_UP | JOY_DOWN);
 		if (!Config.joy1_select_mapping)
 			if (res & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT)) ret0 &= ~(JOY_LEFT | JOY_RIGHT);
+#endif
 		break;
 
 	case PAD_CPSF_MD:
-		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_A))	ret0 ^= JOY_TRG1;	// Low-Kick
+		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_C))	ret0 ^= JOY_TRG1;	// Low-Kick
 		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_B))	ret0 ^= JOY_TRG2;	// Mid-Kick
-		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_X))	ret1 ^= JOY_TRG4; 	// Low-Punch
+		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_Z))	ret1 ^= JOY_TRG4; 	// Low-Punch
 		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_Y))	ret1 ^= JOY_TRG3;	// Mid-Punch
-		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_L))	ret1 ^= JOY_TRG5;	// High-Punch
-		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_R))	ret1 ^= JOY_TRG8;	// High-Kick
+		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_X))	ret1 ^= JOY_TRG5;	// High-Punch
+		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_A))	ret1 ^= JOY_TRG8;	// High-Kick
 
 		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_START))	ret1 ^= JOY_TRG6; // Start
-		if (!Config.joy1_select_mapping)
-			if (res & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))	ret1 ^= JOY_TRG7;	// Mode
+		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))	ret1 ^= JOY_TRG7;	// Mode
 		break;
 
 	case PAD_CPSF_SFC:
-		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_A))	ret0 ^= JOY_TRG2;
+		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_C))	ret0 ^= JOY_TRG2;
 		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_B))	ret0 ^= JOY_TRG1;
-		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_X))	ret1 ^= JOY_TRG3;
+		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_Z))	ret1 ^= JOY_TRG3;
 		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_Y))	ret1 ^= JOY_TRG4;
-		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_L))	ret1 ^= JOY_TRG8;
-		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_R))	ret1 ^= JOY_TRG5;
+		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_X))	ret1 ^= JOY_TRG8;
+		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_A))	ret1 ^= JOY_TRG5;
 
 		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_START))	ret1 ^= JOY_TRG6;
-		if (!Config.joy1_select_mapping)
-			if (res & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))	ret1 ^= JOY_TRG7;
+		if (res & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))	ret1 ^= JOY_TRG7;
 		break;
 	}
 
