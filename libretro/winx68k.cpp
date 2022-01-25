@@ -830,7 +830,7 @@ extern "C" void exec_app_retro(){
 		if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_RIGHT_ANALOG_DOWN)) Core_Key_State[RETROK_KP2] = 0x80;
 		if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_RIGHT_ANALOG_UP)) Core_Key_State[RETROK_KP8] = 0x80;
 
-   		if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_MODE))	//Joypad Key for Menu
+   		if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_MENU))	//Joypad Key for Menu
 				Core_Key_State[RETROK_F12] = 0x80;
 
 #if 0
