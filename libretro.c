@@ -661,6 +661,7 @@ static void parse_cmdline(const char *argv)
 
 static void retro_set_controller_descriptors()
 {
+#if 0
    unsigned i;
    unsigned size = 16;
 
@@ -690,6 +691,7 @@ static void retro_set_controller_descriptors()
    else
       inputDescriptors[0] = inputDescriptorsNull[0];
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, &inputDescriptors);
+#endif
 }
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
