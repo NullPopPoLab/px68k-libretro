@@ -801,7 +801,7 @@ extern "C" void exec_app_retro(){
 
       	Core_Key_State[RETROK_XFX] = 0;
 
-		switch(Config.JOY_TYPE[port]){
+		switch(Config.JOY_TYPE[0]){
 			case 1: /*PAD_CPSF_MD*/
 			case 2: /*PAD_CPSF_SFC*/
 			break;
