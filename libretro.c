@@ -445,14 +445,17 @@ static bool read_m3u(const char *file)
 			if(*p && *p!=';')typ=*p++;
 			else typ=0;
 			if(*p && *p!=';')num=*p++;
-			else num=0;
-			if(*p=='!')rof=*p++;
+			else num='0';
+			if(*p=='!'){rof=1; ++p;}
 			else rof=0;
 			if(*p==';')++p;
 
 			switch(typ){
 				case 'F': /* floppy drive */
 				switch(num){
+					case '0': /* undrived floppy */
+					break;
+
 					case '1': /* 1st floppy drive */
 					if(*p)ADVANCED_FD1=index;
 					break;
