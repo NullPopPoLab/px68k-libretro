@@ -44,6 +44,10 @@ const float framerates[][MODES] = {
 #define SOUNDRATE 44100.0
 #define SNDSZ round(SOUNDRATE / FRAMERATE)
 
+bool ADVANCED_M3U=FALSE;
+int ADVANCED_FD1=-1;
+int ADVANCED_FD2=-1;
+
 static char RPATH[512];
 static char RETRO_DIR[512];
 static const char *retro_save_directory;
@@ -399,34 +403,79 @@ static bool read_m3u(const char *file)
 
    while (fgets(line, sizeof(line), f) && index < sizeof(disk.path) / sizeof(disk.path[0]))
    {
-      if (line[0] == '#')
+		char typ,num,rof;
+		char *p=line;
+      if (p[0] == '#')
          continue;
 
-      char *carriage_return = strchr(line, '\r');
+      char *carriage_return = strchr(p, '\r');
       if (carriage_return)
          *carriage_return = '\0';
 
-      char *newline = strchr(line, '\n');
+      char *newline = strchr(p, '\n');
       if (newline)
          *newline = '\0';
 
       // Remove any beginning and ending quotes as these can cause issues when feeding the paths into command line later
-      if (line[0] == '"')
-          memmove(line, line + 1, strlen(line));
+      if (p[0] == '"')
+          memmove(p, p + 1, strlen(p));
 
-      if (line[strlen(line) - 1] == '"')
-          line[strlen(line) - 1]  = '\0';
+      if (p[strlen(p) - 1] == '"')
+          p[strlen(p) - 1]  = '\0';
 
-      if (line[0] != '\0')
+      if (p[0] != '\0')
       {
          char image_label[4096];
          char *custom_label;
          size_t len = 0;
 
-         if (is_path_absolute(line))
-            strncpy(name, line, sizeof(name));
+		if(*p=='*'){
+			// advanced mark 
+			ADVANCED_M3U=TRUE;
+			++p;
+
+			if(*p && *p!=';')typ=*p++;
+			else typ=0;
+			if(*p && *p!=';')num=*p++;
+			else num='0';
+			if(*p=='!'){rof=1; ++p;}
+			else rof=0;
+			if(*p==';')++p;
+
+			switch(typ){
+				case 'F': /* floppy drive */
+				switch(num){
+					case '0': /* undrived floppy */
+					break;
+
+					case '1': /* 1st floppy drive */
+					if(*p)ADVANCED_FD1=index;
+					break;
+
+					case '2': /* 2nd floppy drive */
+					if(*p)ADVANCED_FD2=index;
+					break;
+				}
+				break;
+
+				case 'T': /* tape drive */
+				break;
+
+				case 'R': /* ROM slot */
+				break;
+
+				case 'H': /* hard drive */
+				break;
+
+				case 'O': /* optical drive */
+				break;
+			}
+		}
+
+         if (is_path_absolute(p))
+            strncpy(name, p, sizeof(name));
          else
-            snprintf(name, sizeof(name), "%s%c%s", base_dir, slash, line);
+            snprintf(name, sizeof(name), "%s%c%s", base_dir, slash, p);
 
          custom_label = strchr(name, '|');
          if (custom_label)
@@ -500,15 +549,29 @@ static int load(const char *argv)
             return false;
          }
 
-         if(disk.total_images > 1)
+		if(ADVANCED_M3U){
+			disk.inserted[0] = (ADVANCED_FD1>=0);
+			disk.inserted[1] = (ADVANCED_FD2>=0);
+
+			if(ADVANCED_FD2>=0){
+	            sprintf((char*)argv, "%s \"%s\" \"%s\"", "px68k", (ADVANCED_FD1>=0)?disk.path[ADVANCED_FD1]:"", disk.path[ADVANCED_FD2]);
+			}
+			else if(ADVANCED_FD1>=0){
+				sprintf((char*)argv, "%s \"%s\"", "px68k", disk.path[ADVANCED_FD1]);
+			}
+		}
+         else if(disk.total_images > 1)
          {
             sprintf((char*)argv, "%s \"%s\" \"%s\"", "px68k", disk.path[0], disk.path[1]);
+            disk.inserted[0] = true;
             disk.inserted[1] = true;
          }
-         else
+         else if(disk.total_images > 0)
+		{
             sprintf((char*)argv, "%s \"%s\"", "px68k", disk.path[0]);
 
-         disk.inserted[0] = true;
+            disk.inserted[0] = true;
+		}
          isM3U = 1;
 
          parse_cmdline(argv);
