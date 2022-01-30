@@ -223,6 +223,7 @@ struct retro_core_option_definition option_def_fr[] = {
       "13"
    },
 #endif
+#if 0
    {
       "px68k_disk_drive",
       "Échange de disques sur le lecteur",
@@ -234,6 +235,7 @@ struct retro_core_option_definition option_def_fr[] = {
       },
       "FDD1"
    },
+#endif
    {
       "px68k_save_fdd_path",
       "Enregistrer les chemins d'accès aux disques",

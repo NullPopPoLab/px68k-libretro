@@ -234,6 +234,7 @@ struct retro_core_option_definition option_defs_us[] = {
       "13"
    },
 #endif
+#if 0
    {
       "px68k_disk_drive",
       "Swap Disks on Drive",
@@ -245,6 +246,7 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "FDD1"
    },
+#endif
    {
       "px68k_save_fdd_path",
       "Save FDD Paths",
