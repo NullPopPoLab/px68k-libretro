@@ -450,6 +450,14 @@ static bool read_m3u(const char *file)
 			else rof=0;
 			if(*p==';')++p;
 
+			custom_label = strchr(p, '|');
+			if (custom_label)*custom_label++=0;
+
+	         if (is_path_absolute(p))
+	            strncpy(name, p, sizeof(name));
+	         else
+	            snprintf(name, sizeof(name), "%s%c%s", base_dir, slash, p);
+
 			switch(typ){
 				case 'F': /* floppy drive */
 				switch(num){
@@ -464,6 +472,16 @@ static bool read_m3u(const char *file)
 					if(*p)ADVANCED_FD2=index;
 					break;
 				}
+	            /* copy path */
+	            strncpy(disk.path[index], name, sizeof(disk.path[index]));
+	
+				/* extract base name from path for labels */
+				if (custom_label)strncpy(disk.label[index], custom_label, sizeof(disk.label[index]));
+				else{
+					extract_basename(image_label, name, sizeof(image_label));
+					strncpy(disk.label[index], image_label, sizeof(disk.label[index]));
+				}
+				index++;
 				break;
 
 				case 'T': /* tape drive */
@@ -479,34 +497,6 @@ static bool read_m3u(const char *file)
 				break;
 			}
 		}
-
-         if (is_path_absolute(p))
-            strncpy(name, p, sizeof(name));
-         else
-            snprintf(name, sizeof(name), "%s%c%s", base_dir, slash, p);
-
-         custom_label = strchr(name, '|');
-         if (custom_label)
-         {
-            /* get disk path */
-            len = custom_label + 1 - name;
-            strncpy(disk.path[index], name, len - 1);
-
-            /* get custom label */
-            custom_label++;
-            strncpy(disk.label[index], custom_label, sizeof(disk.label[index]));
-         }
-         else
-         {
-            /* copy path */
-            strncpy(disk.path[index], name, sizeof(disk.path[index]));
-
-            /* extract base name from path for labels */
-            extract_basename(image_label, name, sizeof(image_label));
-            strncpy(disk.label[index], image_label, sizeof(disk.label[index]));
-         }
-
-         index++;
       }
    }
 
