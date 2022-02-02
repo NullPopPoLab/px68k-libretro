@@ -59,6 +59,10 @@ extern	WORD	BG_BGTOP;
 extern	WORD	BG_BGEND;
 extern	uint8_t	BG_CHRSIZE;
 
+extern unsigned input_devices[];
+char MenuSwitch=0;
+char MenuSwitchOld=0;
+
 char	winx68k_dir[MAX_PATH];
 char	winx68k_ini[MAX_PATH];
 
@@ -612,8 +616,7 @@ extern "C" int pmain(int argc, char *argv[])
 
 extern "C" void handle_retrok(void)
 {
-#if 0
-	if(Core_Key_State[RETROK_F12] && Core_Key_State[RETROK_F12]!=Core_old_Key_State[RETROK_F12]  )
+	if(MenuSwitch && MenuSwitch!=MenuSwitchOld )
 	{
 		if (menu_mode == menu_out) {
 			oldrw=retrow;oldrh=retroh;
@@ -628,7 +631,6 @@ extern "C" void handle_retrok(void)
 			menu_mode = menu_out;
 		}
 	}
-#endif
 
 	KEYP(RETROK_ESCAPE,0x1);
         int i;
@@ -719,9 +721,11 @@ extern "C" void handle_retrok(void)
 	KEYP(RETROK_F12,0x56); //xf2
 	KEYP(RETROK_F13,0x57); //xf3
 
+#if 0
 	// only process kb_to_joypad map when its not zero, else button is used as joypad select mode
 	if (Config.joy1_select_mapping)
 		KEYP(RETROK_XFX, Config.joy1_select_mapping);
+#endif
 
 	KEYP(RETROK_F14,0x58); //xf4
 	KEYP(RETROK_F15,0x59); //xf5
@@ -804,29 +808,58 @@ extern "C" void exec_app_retro(){
 
       	Core_Key_State[RETROK_XFX] = 0;
 
-		switch(Config.JOY_TYPE[0]){
-			case 1: /*PAD_CPSF_MD*/
-			case 2: /*PAD_CPSF_SFC*/
+		switch(input_devices[port]){
+			case RETRO_DEVICE_JOYPAD:
 			break;
 
-			default:
+			case RETRO_DEVICE_JOY2CURSOR:
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_RIGHT)) Core_Key_State[RETROK_RIGHT] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_LEFT)) Core_Key_State[RETROK_LEFT] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_UP)) Core_Key_State[RETROK_UP] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_DOWN)) Core_Key_State[RETROK_DOWN] = 0x80;
+			break;
+
+			case RETRO_DEVICE_JOY2NUMPAD:
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_RIGHT)) Core_Key_State[RETROK_KP6] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_LEFT)) Core_Key_State[RETROK_KP4] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_UP)) Core_Key_State[RETROK_KP8] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_DOWN)) Core_Key_State[RETROK_KP2] = 0x80;
+			break;
+		}
+		switch(input_devices[port]){
+			case RETRO_DEVICE_JOYPAD:
 			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_C)) Core_Key_State[RETROK_SPACE] = 0x80;
 			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_Z)) Core_Key_State[RETROK_F1] = 0x80;
 			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_Y)) Core_Key_State[RETROK_F2] = 0x80;
 			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_X)) Core_Key_State[RETROK_F3] = 0x80;
-//			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_SELECT)) Core_Key_State[RETROK_OPT1] = 0x80;
-//			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_START)) Core_Key_State[RETROK_OPT2] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_SELECT)) Core_Key_State[RETROK_LALT] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_START)) Core_Key_State[RETROK_RALT] = 0x80;
+			break;
+
+			case RETRO_DEVICE_JOY2CURSOR:
+			case RETRO_DEVICE_JOY2NUMPAD:
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_C)) Core_Key_State[RETROK_SPACE] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_Z)) Core_Key_State[RETROK_F1] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_Y)) Core_Key_State[RETROK_F2] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_X)) Core_Key_State[RETROK_F3] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_SELECT)) Core_Key_State[RETROK_LALT] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_START)) Core_Key_State[RETROK_RALT] = 0x80;
+			break;
+		}
+		switch(input_devices[port]){
+			case RETRO_DEVICE_JOYPAD:
+			case RETRO_DEVICE_JOY2CURSOR:
+			case RETRO_DEVICE_JOY2NUMPAD:
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_R)) Core_Key_State[RETROK_F4] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_R2)) Core_Key_State[RETROK_F5] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_L)) Core_Key_State[RETROK_ESCAPE] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_L2)) Core_Key_State[RETROK_RETURN] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_L3)) Core_Key_State[RETROK_LSHIFT] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_R3)) Core_Key_State[RETROK_LCTRL] = 0x80;
+			break;
 		}
 
-		if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_R)) Core_Key_State[RETROK_F4] = 0x80;
-		if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_R2)) Core_Key_State[RETROK_F5] = 0x80;
-		if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_L)) Core_Key_State[RETROK_ESCAPE] = 0x80;
-		if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_L2)) Core_Key_State[RETROK_RETURN] = 0x80;
-		if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_L3)) Core_Key_State[RETROK_LSHIFT] = 0x80;
-		if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_R3)) Core_Key_State[RETROK_LCTRL] = 0x80;
-
-   		if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_MENU))	//Joypad Key for Menu
-				Core_Key_State[RETROK_F12] = 0x80;
+		MenuSwitch = input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_MENU)?0x80:0;
 
 #if 0
 		if (Config.joy1_select_mapping)
@@ -838,6 +871,7 @@ extern "C" void exec_app_retro(){
 			handle_retrok();
 
    		memcpy(Core_old_Key_State,Core_Key_State , sizeof(Core_Key_State) );
+		MenuSwitchOld=MenuSwitch;
 
 		if (menu_mode != menu_out) {
 			int ret;

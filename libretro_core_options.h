@@ -103,6 +103,7 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "2MB"
    },
+#if 0
    {
       "px68k_analog",
       "Use Analog",
@@ -157,6 +158,7 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "Default"
    },
+#endif
    {
       "px68k_adpcm_vol",
       "ADPCM Volume",

@@ -58,8 +58,20 @@ char base_dir[MAX_PATH];
 
 char Core_Key_State[512];
 char Core_old_Key_State[512];
+extern char MenuSwitch,MenuSwitchOld;
 
 static bool joypad1, joypad2;
+
+#define RETRO_DEVICE_JOY2CURSOR RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
+#define RETRO_DEVICE_JOY2NUMPAD RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
+#define RETRO_DEVICE_CPSF_MD RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 3)
+#define RETRO_DEVICE_CPSF_SFC RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 4)
+
+#define MAX_PADS 2
+unsigned input_devices[MAX_PADS]={
+	RETRO_DEVICE_JOYPAD,
+	RETRO_DEVICE_JOYPAD
+};
 
 static bool opt_analog;
 
@@ -751,6 +763,7 @@ static void retro_set_controller_descriptors()
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
 {
+	if(port<MAX_PADS)input_devices[port] = device;
 }
 
 void retro_set_environment(retro_environment_t cb)
@@ -759,13 +772,17 @@ void retro_set_environment(retro_environment_t cb)
 
    static const struct retro_controller_description port[] = {
       { "RetroPad",              RETRO_DEVICE_JOYPAD },
+      { "RetroPad to Cursor",    RETRO_DEVICE_JOY2CURSOR },
+      { "RetroPad to NumPad",    RETRO_DEVICE_JOY2NUMPAD },
+      { "CPSF-MD",               RETRO_DEVICE_CPSF_MD },
+      { "CPSF-SFC",              RETRO_DEVICE_CPSF_SFC },
       { "RetroKeyboard",         RETRO_DEVICE_KEYBOARD },
       { 0 },
    };
 
    static const struct retro_controller_info ports[] = {
-      { port, 2 },
-      { port, 2 },
+      { port, 4 },
+      { port, 1 },
       { NULL, 0 },
    };
 
@@ -781,6 +798,7 @@ static void update_variables(void)
    char key[256] = {0};
    struct retro_variable var = {0};
 
+#if 0
    strcpy(key, "px68k_joytype");
    var.key = key;
    for (i = 0; i < 2; i++)
@@ -797,6 +815,7 @@ static void update_variables(void)
          }
       }
    }
+#endif
 
    var.key = "px68k_cpuspeed";
    var.value = NULL;
@@ -855,6 +874,7 @@ static void update_variables(void)
       Config.ram_size = (value * 1024 * 1024);
    }
 
+#if 0
    var.key = "px68k_analog";
    var.value = NULL;
 
@@ -868,6 +888,7 @@ static void update_variables(void)
 
       //fprintf(stderr, "[libretro-test]: Analog: %s.\n",opt_analog?"ON":"OFF");
    }
+#endif
 
    var.key = "px68k_adpcm_vol";
    var.value = NULL;
@@ -923,6 +944,7 @@ static void update_variables(void)
          Config.MenuFontSize = 1;
    }
 
+#if 0
    var.key = "px68k_joy1_select";
    var.value = NULL;
 
@@ -949,6 +971,7 @@ static void update_variables(void)
       else
          Config.joy1_select_mapping = 0;
    }
+#endif
 
    var.key = "px68k_save_fdd_path";
    var.value = NULL;
