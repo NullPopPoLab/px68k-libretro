@@ -54,6 +54,7 @@ char base_dir[MAX_PATH];
 
 char Core_Key_State[512];
 char Core_old_Key_State[512];
+extern char MenuSwitch,MenuSwitchOld;
 
 static bool joypad1, joypad2;
 
@@ -880,6 +881,7 @@ static void update_variables(void)
          Config.MenuFontSize = 1;
    }
 
+#if 0
    var.key = "px68k_joy1_select";
    var.value = NULL;
 
@@ -906,6 +908,7 @@ static void update_variables(void)
       else
          Config.joy1_select_mapping = 0;
    }
+#endif
 
    var.key = "px68k_save_fdd_path";
    var.value = NULL;
