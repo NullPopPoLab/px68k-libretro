@@ -60,6 +60,8 @@ static bool joypad1, joypad2;
 
 #define RETRO_DEVICE_JOY2CURSOR RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
 #define RETRO_DEVICE_JOY2NUMPAD RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
+#define RETRO_DEVICE_CPSF_MD RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 3)
+#define RETRO_DEVICE_CPSF_SFC RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 4)
 
 #define MAX_PADS 2
 unsigned input_devices[MAX_PADS]={
@@ -717,6 +719,8 @@ void retro_set_environment(retro_environment_t cb)
       { "RetroPad",              RETRO_DEVICE_JOYPAD },
       { "RetroPad to Cursor",    RETRO_DEVICE_JOY2CURSOR },
       { "RetroPad to NumPad",    RETRO_DEVICE_JOY2NUMPAD },
+      { "CPSF-MD",               RETRO_DEVICE_CPSF_MD },
+      { "CPSF-SFC",              RETRO_DEVICE_CPSF_SFC },
       { "RetroKeyboard",         RETRO_DEVICE_KEYBOARD },
       { 0 },
    };
@@ -739,6 +743,7 @@ static void update_variables(void)
    char key[256] = {0};
    struct retro_variable var = {0};
 
+#if 0
    strcpy(key, "px68k_joytype");
    var.key = key;
    for (i = 0; i < 2; i++)
@@ -755,6 +760,7 @@ static void update_variables(void)
          }
       }
    }
+#endif
 
    var.key = "px68k_cpuspeed";
    var.value = NULL;
@@ -813,6 +819,7 @@ static void update_variables(void)
       Config.ram_size = (value * 1024 * 1024);
    }
 
+#if 0
    var.key = "px68k_analog";
    var.value = NULL;
 
@@ -826,6 +833,7 @@ static void update_variables(void)
 
       //fprintf(stderr, "[libretro-test]: Analog: %s.\n",opt_analog?"ON":"OFF");
    }
+#endif
 
    var.key = "px68k_adpcm_vol";
    var.value = NULL;

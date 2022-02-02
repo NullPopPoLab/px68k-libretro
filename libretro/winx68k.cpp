@@ -828,19 +828,12 @@ extern "C" void exec_app_retro(){
 		}
 		switch(input_devices[port]){
 			case RETRO_DEVICE_JOYPAD:
-			switch(Config.JOY_TYPE[0]){
-				case 1: /*PAD_CPSF_MD*/
-				case 2: /*PAD_CPSF_SFC*/
-				break;
-
-				default:
-				if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_C)) Core_Key_State[RETROK_SPACE] = 0x80;
-				if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_Z)) Core_Key_State[RETROK_F1] = 0x80;
-				if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_Y)) Core_Key_State[RETROK_F2] = 0x80;
-				if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_X)) Core_Key_State[RETROK_F3] = 0x80;
-				if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_SELECT)) Core_Key_State[RETROK_LALT] = 0x80;
-				if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_START)) Core_Key_State[RETROK_RALT] = 0x80;
-			}
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_C)) Core_Key_State[RETROK_SPACE] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_Z)) Core_Key_State[RETROK_F1] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_Y)) Core_Key_State[RETROK_F2] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_X)) Core_Key_State[RETROK_F3] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_SELECT)) Core_Key_State[RETROK_LALT] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_START)) Core_Key_State[RETROK_RALT] = 0x80;
 			break;
 
 			case RETRO_DEVICE_JOY2CURSOR:
