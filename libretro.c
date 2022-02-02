@@ -770,7 +770,7 @@ void retro_set_environment(retro_environment_t cb)
 {
    int nocontent = 1;
 
-   static const struct retro_controller_description port[] = {
+   static const struct retro_controller_description port1[] = {
       { "RetroPad",              RETRO_DEVICE_JOYPAD },
       { "RetroPad to Cursor",    RETRO_DEVICE_JOY2CURSOR },
       { "RetroPad to NumPad",    RETRO_DEVICE_JOY2NUMPAD },
@@ -780,9 +780,16 @@ void retro_set_environment(retro_environment_t cb)
       { 0 },
    };
 
+   static const struct retro_controller_description port2[] = {
+      { "RetroPad",              RETRO_DEVICE_JOYPAD },
+      { "CPSF-MD",               RETRO_DEVICE_CPSF_MD },
+      { "CPSF-SFC",              RETRO_DEVICE_CPSF_SFC },
+      { 0 },
+   };
+
    static const struct retro_controller_info ports[] = {
-      { port, 4 },
-      { port, 1 },
+      { port1, 6 },
+      { port2, 3 },
       { NULL, 0 },
    };
 
