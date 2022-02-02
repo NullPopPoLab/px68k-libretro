@@ -21,6 +21,7 @@
 #ifndef NO_MERCURY
 #include "x68k/mercury.h"
 #endif
+#include "libretro/retrodevice.h"
 
 #ifdef _WIN32
 char slash = '\\';
@@ -57,11 +58,6 @@ char Core_old_Key_State[512];
 extern char MenuSwitch,MenuSwitchOld;
 
 static bool joypad1, joypad2;
-
-#define RETRO_DEVICE_JOY2CURSOR RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
-#define RETRO_DEVICE_JOY2NUMPAD RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
-#define RETRO_DEVICE_CPSF_MD RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 3)
-#define RETRO_DEVICE_CPSF_SFC RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 4)
 
 #define MAX_PADS 2
 unsigned input_devices[MAX_PADS]={
