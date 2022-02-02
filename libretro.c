@@ -57,6 +57,15 @@ char Core_old_Key_State[512];
 
 static bool joypad1, joypad2;
 
+#define RETRO_DEVICE_JOY2CURSOR RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
+#define RETRO_DEVICE_JOY2NUMPAD RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
+
+#define MAX_PADS 2
+unsigned input_devices[MAX_PADS]={
+	RETRO_DEVICE_JOYPAD,
+	RETRO_DEVICE_JOYPAD
+};
+
 static bool opt_analog;
 
 int retrow = 800;
@@ -696,6 +705,7 @@ static void retro_set_controller_descriptors()
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
 {
+	if(port<MAX_PADS)input_devices[port] = device;
 }
 
 void retro_set_environment(retro_environment_t cb)
@@ -704,13 +714,15 @@ void retro_set_environment(retro_environment_t cb)
 
    static const struct retro_controller_description port[] = {
       { "RetroPad",              RETRO_DEVICE_JOYPAD },
+      { "RetroPad to Cursor",    RETRO_DEVICE_JOY2CURSOR },
+      { "RetroPad to NumPad",    RETRO_DEVICE_JOY2NUMPAD },
       { "RetroKeyboard",         RETRO_DEVICE_KEYBOARD },
       { 0 },
    };
 
    static const struct retro_controller_info ports[] = {
-      { port, 2 },
-      { port, 2 },
+      { port, 4 },
+      { port, 1 },
       { NULL, 0 },
    };
 
