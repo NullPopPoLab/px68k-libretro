@@ -138,6 +138,7 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "Default (2 Buttons)"
    },
+#if 0
    {
       "px68k_joy1_select",
       "P1 Joystick Select Mapping",
@@ -157,6 +158,7 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "Default"
    },
+#endif
    {
       "px68k_adpcm_vol",
       "ADPCM Volume",
