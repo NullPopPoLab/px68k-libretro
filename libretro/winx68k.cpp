@@ -815,6 +815,8 @@ extern "C" void exec_app_retro(){
 			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_LEFT)) Core_Key_State[RETROK_LEFT] = 0x80;
 			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_UP)) Core_Key_State[RETROK_UP] = 0x80;
 			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_DOWN)) Core_Key_State[RETROK_DOWN] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_A)) Core_Key_State[RETROK_x] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_B)) Core_Key_State[RETROK_z] = 0x80;
 			break;
 
 			case RETRO_DEVICE_JOY2NUMPAD:
@@ -822,18 +824,12 @@ extern "C" void exec_app_retro(){
 			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_LEFT)) Core_Key_State[RETROK_KP4] = 0x80;
 			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_UP)) Core_Key_State[RETROK_KP8] = 0x80;
 			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_DOWN)) Core_Key_State[RETROK_KP2] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_A)) Core_Key_State[RETROK_x] = 0x80;
+			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_B)) Core_Key_State[RETROK_z] = 0x80;
 			break;
 		}
 		switch(input_devices[0]){
 			case RETRO_DEVICE_JOYPAD:
-			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_C)) Core_Key_State[RETROK_SPACE] = 0x80;
-			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_Z)) Core_Key_State[RETROK_F1] = 0x80;
-			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_Y)) Core_Key_State[RETROK_F2] = 0x80;
-			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_X)) Core_Key_State[RETROK_F3] = 0x80;
-			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_SELECT)) Core_Key_State[RETROK_LALT] = 0x80;
-			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_START)) Core_Key_State[RETROK_RALT] = 0x80;
-			break;
-
 			case RETRO_DEVICE_JOY2CURSOR:
 			case RETRO_DEVICE_JOY2NUMPAD:
 			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_C)) Core_Key_State[RETROK_SPACE] = 0x80;
