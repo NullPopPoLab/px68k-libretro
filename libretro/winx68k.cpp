@@ -59,6 +59,10 @@ extern	WORD	BG_BGTOP;
 extern	WORD	BG_BGEND;
 extern	uint8_t	BG_CHRSIZE;
 
+extern int isM3U;
+extern char FDDPATH[2][MAX_PATH];
+extern HDDPATH[4][MAX_PATH];
+
 char	winx68k_dir[MAX_PATH];
 char	winx68k_ini[MAX_PATH];
 
