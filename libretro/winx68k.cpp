@@ -596,7 +596,7 @@ extern "C" int pmain(int argc, char *argv[])
 			if(FDDPATH[i][0])strncpy(Config.FDDImage[i], FDDPATH[i], MAX_PATH-1);
 		}
 		for(i=0;i<4;++i){
-			if(HDDPATH[i][0])strncpy(Config.HDDImage[i], HDDPATH[i], MAX_PATH-1);
+			if(HDDPATH[i][0])strncpy(Config.HDImage[i], HDDPATH[i], MAX_PATH-1);
 		}
 	}
 	else{
