@@ -56,6 +56,8 @@ static const char *retro_system_directory;
 const char *retro_content_directory;
 char retro_system_conf[512];
 char base_dir[MAX_PATH];
+char FDDPATH[2][MAX_PATH];
+char HDDPATH[4][MAX_PATH];
 
 char Core_Key_State[512];
 char Core_old_Key_State[512];
@@ -450,6 +452,14 @@ static bool read_m3u(const char *file)
 			else rof=0;
 			if(*p==';')++p;
 
+			custom_label = strchr(p, '|');
+			if (custom_label)*custom_label++=0;
+
+	         if (is_path_absolute(p))
+	            strncpy(name, p, sizeof(name));
+	         else
+	            snprintf(name, sizeof(name), "%s%c%s", base_dir, slash, p);
+
 			switch(typ){
 				case 'F': /* floppy drive */
 				switch(num){
@@ -458,12 +468,24 @@ static bool read_m3u(const char *file)
 
 					case '1': /* 1st floppy drive */
 					if(*p)ADVANCED_FD1=index;
+					strncpy(FDDPATH[0],p,MAX_PATH-1);
 					break;
 
 					case '2': /* 2nd floppy drive */
 					if(*p)ADVANCED_FD2=index;
+					strncpy(FDDPATH[1],p,MAX_PATH-1);
 					break;
 				}
+	            /* copy path */
+	            strncpy(disk.path[index], name, sizeof(disk.path[index]));
+	
+				/* extract base name from path for labels */
+				if (custom_label)strncpy(disk.label[index], custom_label, sizeof(disk.label[index]));
+				else{
+					extract_basename(image_label, name, sizeof(image_label));
+					strncpy(disk.label[index], image_label, sizeof(disk.label[index]));
+				}
+				index++;
 				break;
 
 				case 'T': /* tape drive */
@@ -473,40 +495,29 @@ static bool read_m3u(const char *file)
 				break;
 
 				case 'H': /* hard drive */
+				switch(num){
+					case '1': /* 1st hard drive */
+					strncpy(HDDPATH[0],p,MAX_PATH-1);
+					break;
+
+					case '2': /* 2nd hard drive */
+					strncpy(HDDPATH[1],p,MAX_PATH-1);
+					break;
+
+					case '3': /* 3rd hard drive */
+					strncpy(HDDPATH[2],p,MAX_PATH-1);
+					break;
+
+					case '4': /* 4th hard drive */
+					strncpy(HDDPATH[3],p,MAX_PATH-1);
+					break;
+				}
 				break;
 
 				case 'O': /* optical drive */
 				break;
 			}
 		}
-
-         if (is_path_absolute(p))
-            strncpy(name, p, sizeof(name));
-         else
-            snprintf(name, sizeof(name), "%s%c%s", base_dir, slash, p);
-
-         custom_label = strchr(name, '|');
-         if (custom_label)
-         {
-            /* get disk path */
-            len = custom_label + 1 - name;
-            strncpy(disk.path[index], name, len - 1);
-
-            /* get custom label */
-            custom_label++;
-            strncpy(disk.label[index], custom_label, sizeof(disk.label[index]));
-         }
-         else
-         {
-            /* copy path */
-            strncpy(disk.path[index], name, sizeof(disk.path[index]));
-
-            /* extract base name from path for labels */
-            extract_basename(image_label, name, sizeof(image_label));
-            strncpy(disk.label[index], image_label, sizeof(disk.label[index]));
-         }
-
-         index++;
       }
    }
 
@@ -529,7 +540,8 @@ static void Add_Option(const char* option)
    sprintf(XARGV[PARAMCOUNT++], "%s\0", option);
 }
 
-static int isM3U = 0;
+int isM3U = 0;
+static char* argv_none="";
 
 static int load(const char *argv)
 {
@@ -557,28 +569,22 @@ static int load(const char *argv)
             return false;
          }
 
+		argv=argv_none;
 		if(ADVANCED_M3U){
 			disk.inserted[0] = (ADVANCED_FD1>=0);
 			disk.inserted[1] = (ADVANCED_FD2>=0);
-
-			if(ADVANCED_FD2>=0){
-	            sprintf((char*)argv, "%s \"%s\" \"%s\"", "px68k", (ADVANCED_FD1>=0)?disk.path[ADVANCED_FD1]:"", disk.path[ADVANCED_FD2]);
-			}
-			else if(ADVANCED_FD1>=0){
-				sprintf((char*)argv, "%s \"%s\"", "px68k", disk.path[ADVANCED_FD1]);
-			}
 		}
          else if(disk.total_images > 1)
          {
-            sprintf((char*)argv, "%s \"%s\" \"%s\"", "px68k", disk.path[0], disk.path[1]);
             disk.inserted[0] = true;
             disk.inserted[1] = true;
+			strncpy(FDDPATH[0],disk.path[0],MAX_PATH-1);
+			strncpy(FDDPATH[1],disk.path[1],MAX_PATH-1);
          }
          else if(disk.total_images > 0)
 		{
-            sprintf((char*)argv, "%s \"%s\"", "px68k", disk.path[0]);
-
             disk.inserted[0] = true;
+			strncpy(FDDPATH[0],disk.path[0],MAX_PATH-1);
 		}
          isM3U = 1;
 
@@ -1395,6 +1401,8 @@ void retro_deinit(void)
 void retro_reset(void)
 {
    WinX68k_Reset();
+	memset(FDDPATH,0,sizeof(FDDPATH));
+	memset(HDDPATH,0,sizeof(HDDPATH));
 }
 
 static int firstcall = 1;
