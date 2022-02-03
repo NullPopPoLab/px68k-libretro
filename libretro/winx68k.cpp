@@ -581,18 +581,29 @@ extern "C" int pmain(int argc, char *argv[])
 	DSound_Play();
 
 	// apply defined command line settings
-	if(argc==3 && argv[1][0]=='-' && argv[1][1]=='h')
-		strcpy(Config.HDImage[0], argv[2]);
-	else {
-		switch (argc) {
-		case 3:
-			strcpy(Config.FDDImage[1], argv[2]);
-		case 2:
-			strcpy(Config.FDDImage[0], argv[1]);
-			break;
-		case 0:
-			// start menu when running without content
-			menu_mode = menu_enter;
+	if(isM3U){
+		int i;
+		for(i=0;i<2;++i){
+			if(FDDPATH[i][0])strncpy(Config.FDDImage[i], FDDPATH[i], MAX_PATH-1);
+		}
+		for(i=0;i<4;++i){
+			if(HDDPATH[i][0])strncpy(Config.HDDImage[i], HDDPATH[i], MAX_PATH-1);
+		}
+	}
+	else{
+		if(argc==3 && argv[1][0]=='-' && argv[1][1]=='h')
+			strcpy(Config.HDImage[0], argv[2]);
+		else {
+			switch (argc) {
+			case 3:
+				strcpy(Config.FDDImage[1], argv[2]);
+			case 2:
+				strcpy(Config.FDDImage[0], argv[1]);
+				break;
+			case 0:
+				// start menu when running without content
+				menu_mode = menu_enter;
+			}
 		}
 	}
 
