@@ -545,6 +545,10 @@ static char* argv_none="";
 
 static int load(const char *argv)
 {
+	isM3U = 0;
+	memset(FDDPATH,0,sizeof(FDDPATH));
+	memset(HDDPATH,0,sizeof(HDDPATH));
+
    if (strlen(argv) > strlen("cmd"))
    {
       int res = 0;
@@ -1401,8 +1405,6 @@ void retro_deinit(void)
 void retro_reset(void)
 {
    WinX68k_Reset();
-	memset(FDDPATH,0,sizeof(FDDPATH));
-	memset(HDDPATH,0,sizeof(HDDPATH));
 }
 
 static int firstcall = 1;
