@@ -61,6 +61,7 @@ extern	WORD	BG_BGEND;
 extern	uint8_t	BG_CHRSIZE;
 
 extern int isM3U;
+extern bool FDDRO[2];
 extern char FDDPATH[2][MAX_PATH];
 extern char HDDPATH[4][MAX_PATH];
 
@@ -616,8 +617,8 @@ extern "C" int pmain(int argc, char *argv[])
 		}
 	}
 
-	FDD_SetFD(0, Config.FDDImage[0], 0);
-	FDD_SetFD(1, Config.FDDImage[1], 0);
+	FDD_SetFD(0, Config.FDDImage[0], FDDRO[0]);
+	FDD_SetFD(1, Config.FDDImage[1], FDDRO[1]);
 
 	return 1;
 
