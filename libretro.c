@@ -55,6 +55,7 @@ static const char *retro_system_directory;
 const char *retro_content_directory;
 char retro_system_conf[512];
 char base_dir[MAX_PATH];
+bool FDDRO[2]={0};
 char FDDPATH[2][MAX_PATH];
 char HDDPATH[4][MAX_PATH];
 
@@ -100,9 +101,12 @@ struct disk_control_interface_t
    unsigned dci_version;                        /* disk control interface version, 0 = use old interface */
    unsigned total_images;                       /* total number if disk images */
    unsigned index;                              /* currect disk index */
+#if 0
    disk_drive cur_drive;                          /* current active drive */
+#endif
    bool inserted[2];                            /* tray state for FDD0/FDD1, 0 = disk ejected, 1 = disk inserted */
 
+   bool readonly[MAX_DISKS];
    unsigned char path[MAX_DISKS][MAX_PATH];     /* disk image paths */
    unsigned char label[MAX_DISKS][MAX_PATH];    /* disk image base name w/o extension */
 
@@ -176,6 +180,7 @@ static void update_variable_disk_drive_swap(void)
       NULL
    };
 
+#if 0
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (strcmp(var.value, "FDD0") == 0)
@@ -183,6 +188,7 @@ static void update_variable_disk_drive_swap(void)
       else
          disk.cur_drive = FDD1;
    }
+#endif
 }
 
 static bool set_eject_state(bool ejected)
@@ -192,22 +198,22 @@ static bool set_eject_state(bool ejected)
 
    if (ejected)
    {
-      FDD_EjectFD(disk.cur_drive);
-      Config.FDDImage[disk.cur_drive][0] = '\0';
+      FDD_EjectFD(0);
+      Config.FDDImage[0][0] = '\0';
    }
    else
    {
-      strcpy(Config.FDDImage[disk.cur_drive], disk.path[disk.index]);
-      FDD_SetFD(disk.cur_drive, Config.FDDImage[disk.cur_drive], 0);
+      strcpy(Config.FDDImage[0], disk.path[disk.index]);
+      FDD_SetFD(0, Config.FDDImage[0], disk.readonly[disk.index]);
    }
-   disk.inserted[disk.cur_drive] = !ejected;
+   disk.inserted[0] = !ejected;
    return true;
 }
 
 static bool get_eject_state(void)
 {
    update_variable_disk_drive_swap();
-   return !disk.inserted[disk.cur_drive];
+   return !disk.inserted[0];
 }
 
 static unsigned get_image_index(void)
@@ -241,6 +247,7 @@ static bool replace_image_index(unsigned index, const struct retro_game_info *in
    strcpy(disk.path[index], info->path);
    extract_basename(image, info->path, sizeof(image));
    snprintf(disk.label[index], sizeof(disk.label), "%s", image);
+   disk.readonly[index]=false;
    return true;
 }
 
@@ -324,7 +331,7 @@ static void disk_swap_interface_init(void)
    disk.dci_version  = 0;
    disk.total_images = 0;
    disk.index        = 0;
-   disk.cur_drive    = FDD1;
+/*   disk.cur_drive    = FDD1;*/
    disk.inserted[0]  = false;
    disk.inserted[1]  = false;
 
@@ -333,6 +340,7 @@ static void disk_swap_interface_init(void)
 
    for (i = 0; i < MAX_DISKS; i++)
    {
+      disk.readonly[i]=false;
       disk.path[i][0]  = '\0';
       disk.label[i][0] = '\0';
    }
@@ -468,17 +476,20 @@ static bool read_m3u(const char *file)
 
 					case '1': /* 1st floppy drive */
 					if(*p)ADVANCED_FD1=index;
-					strncpy(FDDPATH[0],p,MAX_PATH-1);
+					FDDRO[0]=rof;
+					strncpy(FDDPATH[0],name,MAX_PATH-1);
 					break;
 
 					case '2': /* 2nd floppy drive */
 					if(*p)ADVANCED_FD2=index;
-					strncpy(FDDPATH[1],p,MAX_PATH-1);
+					FDDRO[1]=rof;
+					strncpy(FDDPATH[1],name,MAX_PATH-1);
 					break;
 				}
 	            /* copy path */
 	            strncpy(disk.path[index], name, sizeof(disk.path[index]));
-	
+				disk.readonly[index]=rof;	
+
 				/* extract base name from path for labels */
 				if (custom_label)strncpy(disk.label[index], custom_label, sizeof(disk.label[index]));
 				else{
@@ -497,19 +508,19 @@ static bool read_m3u(const char *file)
 				case 'H': /* hard drive */
 				switch(num){
 					case '1': /* 1st hard drive */
-					strncpy(HDDPATH[0],p,MAX_PATH-1);
+					strncpy(HDDPATH[0],name,MAX_PATH-1);
 					break;
 
 					case '2': /* 2nd hard drive */
-					strncpy(HDDPATH[1],p,MAX_PATH-1);
+					strncpy(HDDPATH[1],name,MAX_PATH-1);
 					break;
 
 					case '3': /* 3rd hard drive */
-					strncpy(HDDPATH[2],p,MAX_PATH-1);
+					strncpy(HDDPATH[2],name,MAX_PATH-1);
 					break;
 
 					case '4': /* 4th hard drive */
-					strncpy(HDDPATH[3],p,MAX_PATH-1);
+					strncpy(HDDPATH[3],name,MAX_PATH-1);
 					break;
 				}
 				break;
@@ -546,6 +557,7 @@ static char* argv_none="";
 static int load(const char *argv)
 {
 	isM3U = 0;
+	memset(FDDRO,0,sizeof(FDDRO));
 	memset(FDDPATH,0,sizeof(FDDPATH));
 	memset(HDDPATH,0,sizeof(HDDPATH));
 
