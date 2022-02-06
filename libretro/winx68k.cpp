@@ -59,6 +59,11 @@ extern	WORD	BG_BGTOP;
 extern	WORD	BG_BGEND;
 extern	uint8_t	BG_CHRSIZE;
 
+extern int isM3U;
+extern bool FDDRO[2];
+extern char FDDPATH[2][MAX_PATH];
+extern char HDDPATH[4][MAX_PATH];
+
 char	winx68k_dir[MAX_PATH];
 char	winx68k_ini[MAX_PATH];
 
@@ -581,23 +586,34 @@ extern "C" int pmain(int argc, char *argv[])
 	DSound_Play();
 
 	// apply defined command line settings
-	if(argc==3 && argv[1][0]=='-' && argv[1][1]=='h')
-		strcpy(Config.HDImage[0], argv[2]);
-	else {
-		switch (argc) {
-		case 3:
-			strcpy(Config.FDDImage[1], argv[2]);
-		case 2:
-			strcpy(Config.FDDImage[0], argv[1]);
-			break;
-		case 0:
-			// start menu when running without content
-			menu_mode = menu_enter;
+	if(isM3U){
+		int i;
+		for(i=0;i<2;++i){
+			if(FDDPATH[i][0])strncpy(Config.FDDImage[i], FDDPATH[i], MAX_PATH-1);
+		}
+		for(i=0;i<4;++i){
+			if(HDDPATH[i][0])strncpy(Config.HDImage[i], HDDPATH[i], MAX_PATH-1);
+		}
+	}
+	else{
+		if(argc==3 && argv[1][0]=='-' && argv[1][1]=='h')
+			strcpy(Config.HDImage[0], argv[2]);
+		else {
+			switch (argc) {
+			case 3:
+				strcpy(Config.FDDImage[1], argv[2]);
+			case 2:
+				strcpy(Config.FDDImage[0], argv[1]);
+				break;
+			case 0:
+				// start menu when running without content
+				menu_mode = menu_enter;
+			}
 		}
 	}
 
-	FDD_SetFD(0, Config.FDDImage[0], 0);
-	FDD_SetFD(1, Config.FDDImage[1], 0);
+	FDD_SetFD(0, Config.FDDImage[0], FDDRO[0]);
+	FDD_SetFD(1, Config.FDDImage[1], FDDRO[1]);
 
 	return 1;
 

@@ -44,6 +44,11 @@ const float framerates[][MODES] = {
 #define SOUNDRATE 44100.0
 #define SNDSZ round(SOUNDRATE / FRAMERATE)
 
+bool ADVANCED_M3U=false;
+int ADVANCED_FD1=-1;
+int ADVANCED_FD2=-1;
+static int inserted_disk_idx[2]={-1,-1};
+
 static char RPATH[512];
 static char RETRO_DIR[512];
 static const char *retro_save_directory;
@@ -51,6 +56,9 @@ static const char *retro_system_directory;
 const char *retro_content_directory;
 char retro_system_conf[512];
 char base_dir[MAX_PATH];
+bool FDDRO[2]={0};
+char FDDPATH[2][MAX_PATH];
+char HDDPATH[4][MAX_PATH];
 
 char Core_Key_State[512];
 char Core_old_Key_State[512];
@@ -95,8 +103,10 @@ struct disk_control_interface_t
    unsigned total_images;                       /* total number if disk images */
    unsigned index;                              /* currect disk index */
 /*   disk_drive cur_drive;                          /* current active drive */
+#endif
    bool inserted[2];                            /* tray state for FDD0/FDD1, 0 = disk ejected, 1 = disk inserted */
 
+   bool readonly[MAX_DISKS];
    unsigned char path[MAX_DISKS][MAX_PATH];     /* disk image paths */
    unsigned char label[MAX_DISKS][MAX_PATH];    /* disk image base name w/o extension */
 
@@ -170,6 +180,7 @@ static void update_variable_disk_drive_swap(void)
       NULL
    };
 
+#if 0
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (strcmp(var.value, "FDD0") == 0)
@@ -189,11 +200,13 @@ static bool set_drive_eject_state(unsigned drive, bool ejected)
    {
       FDD_EjectFD(drive);
       Config.FDDImage[drive][0] = '\0';
+      inserted_disk_idx[drive]=-1;
    }
    else
    {
       strcpy(Config.FDDImage[drive], disk.path[disk.index]);
-      FDD_SetFD(drive, Config.FDDImage[drive], 0);
+      FDD_SetFD(drive, Config.FDDImage[drive], disk.readonly[disk.index]);
+      inserted_disk_idx[drive]=disk.index;
    }
    disk.inserted[drive] = !ejected;
    return true;
@@ -241,6 +254,7 @@ static bool replace_image_index(unsigned index, const struct retro_game_info *in
    strcpy(disk.path[index], info->path);
    extract_basename(image, info->path, sizeof(image));
    snprintf(disk.label[index], sizeof(disk.label), "%s", image);
+   disk.readonly[index]=false;
    return true;
 }
 
@@ -289,6 +303,13 @@ static bool disk_get_image_label(unsigned index, char *label, size_t len)
    return false;
 }
 
+static int disk_get_drive_image_index(unsigned drive)
+{
+	if(drive>=get_num_drives())return -1;
+	if(get_drive_eject_state(drive))return -1;
+	return inserted_disk_idx[drive];	
+}
+
 void attach_disk_swap_interface(void)
 {
    memset(&dskcb,0,sizeof(dskcb));
@@ -303,6 +324,7 @@ void attach_disk_swap_interface(void)
    dskcb.set_initial_image = NULL;
    dskcb.get_image_path = disk_get_image_path;
    dskcb.get_image_label = disk_get_image_label;
+   dskcb.get_drive_image_index = disk_get_drive_image_index;
 
    environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT2_INTERFACE, &dskcb);
 }
@@ -322,6 +344,7 @@ static void disk_swap_interface_init(void)
 
    for (i = 0; i < MAX_DISKS; i++)
    {
+      disk.readonly[i]=false;
       disk.path[i][0]  = '\0';
       disk.label[i][0] = '\0';
    }
@@ -399,57 +422,114 @@ static bool read_m3u(const char *file)
 
    while (fgets(line, sizeof(line), f) && index < sizeof(disk.path) / sizeof(disk.path[0]))
    {
-      if (line[0] == '#')
+		char typ,num,rof;
+		char *p=line;
+      if (p[0] == '#')
          continue;
 
-      char *carriage_return = strchr(line, '\r');
+      char *carriage_return = strchr(p, '\r');
       if (carriage_return)
          *carriage_return = '\0';
 
-      char *newline = strchr(line, '\n');
+      char *newline = strchr(p, '\n');
       if (newline)
          *newline = '\0';
 
       // Remove any beginning and ending quotes as these can cause issues when feeding the paths into command line later
-      if (line[0] == '"')
-          memmove(line, line + 1, strlen(line));
+      if (p[0] == '"')
+          memmove(p, p + 1, strlen(p));
 
-      if (line[strlen(line) - 1] == '"')
-          line[strlen(line) - 1]  = '\0';
+      if (p[strlen(p) - 1] == '"')
+          p[strlen(p) - 1]  = '\0';
 
-      if (line[0] != '\0')
+      if (p[0] != '\0')
       {
          char image_label[4096];
          char *custom_label;
          size_t len = 0;
 
-         if (is_path_absolute(line))
-            strncpy(name, line, sizeof(name));
-         else
-            snprintf(name, sizeof(name), "%s%c%s", base_dir, slash, line);
+		if(*p=='*'){
+			// advanced mark 
+			ADVANCED_M3U=true;
+			++p;
 
-         custom_label = strchr(name, '|');
-         if (custom_label)
-         {
-            /* get disk path */
-            len = custom_label + 1 - name;
-            strncpy(disk.path[index], name, len - 1);
+			if(*p && *p!=';')typ=*p++;
+			else typ=0;
+			if(*p && *p!=';')num=*p++;
+			else num='0';
+			if(*p=='!'){rof=1; ++p;}
+			else rof=0;
+			if(*p==';')++p;
 
-            /* get custom label */
-            custom_label++;
-            strncpy(disk.label[index], custom_label, sizeof(disk.label[index]));
-         }
-         else
-         {
-            /* copy path */
-            strncpy(disk.path[index], name, sizeof(disk.path[index]));
+			custom_label = strchr(p, '|');
+			if (custom_label)*custom_label++=0;
 
-            /* extract base name from path for labels */
-            extract_basename(image_label, name, sizeof(image_label));
-            strncpy(disk.label[index], image_label, sizeof(disk.label[index]));
-         }
+	         if (is_path_absolute(p))
+	            strncpy(name, p, sizeof(name));
+	         else
+	            snprintf(name, sizeof(name), "%s%c%s", base_dir, slash, p);
 
-         index++;
+			switch(typ){
+				case 'F': /* floppy drive */
+				switch(num){
+					case '0': /* undrived floppy */
+					break;
+
+					case '1': /* 1st floppy drive */
+					if(*p)ADVANCED_FD1=index;
+					FDDRO[0]=rof;
+					strncpy(FDDPATH[0],name,MAX_PATH-1);
+					break;
+
+					case '2': /* 2nd floppy drive */
+					if(*p)ADVANCED_FD2=index;
+					FDDRO[1]=rof;
+					strncpy(FDDPATH[1],name,MAX_PATH-1);
+					break;
+				}
+	            /* copy path */
+	            strncpy(disk.path[index], name, sizeof(disk.path[index]));
+				disk.readonly[index]=rof;	
+
+				/* extract base name from path for labels */
+				if (custom_label)strncpy(disk.label[index], custom_label, sizeof(disk.label[index]));
+				else{
+					extract_basename(image_label, name, sizeof(image_label));
+					strncpy(disk.label[index], image_label, sizeof(disk.label[index]));
+				}
+				index++;
+				break;
+
+				case 'T': /* tape drive */
+				break;
+
+				case 'R': /* ROM slot */
+				break;
+
+				case 'H': /* hard drive */
+				switch(num){
+					case '1': /* 1st hard drive */
+					strncpy(HDDPATH[0],name,MAX_PATH-1);
+					break;
+
+					case '2': /* 2nd hard drive */
+					strncpy(HDDPATH[1],name,MAX_PATH-1);
+					break;
+
+					case '3': /* 3rd hard drive */
+					strncpy(HDDPATH[2],name,MAX_PATH-1);
+					break;
+
+					case '4': /* 4th hard drive */
+					strncpy(HDDPATH[3],name,MAX_PATH-1);
+					break;
+				}
+				break;
+
+				case 'O': /* optical drive */
+				break;
+			}
+		}
       }
    }
 
@@ -472,10 +552,16 @@ static void Add_Option(const char* option)
    sprintf(XARGV[PARAMCOUNT++], "%s\0", option);
 }
 
-static int isM3U = 0;
+int isM3U = 0;
+static char* argv_none="";
 
 static int load(const char *argv)
 {
+	isM3U = 0;
+	memset(FDDRO,0,sizeof(FDDRO));
+	memset(FDDPATH,0,sizeof(FDDPATH));
+	memset(HDDPATH,0,sizeof(HDDPATH));
+
    if (strlen(argv) > strlen("cmd"))
    {
       int res = 0;
@@ -500,15 +586,33 @@ static int load(const char *argv)
             return false;
          }
 
-         if(disk.total_images > 1)
+		argv=argv_none;
+		if(ADVANCED_M3U){
+			disk.inserted[0] = (ADVANCED_FD1>=0);
+			disk.inserted[1] = (ADVANCED_FD2>=0);
+			inserted_disk_idx[0]=ADVANCED_FD1;
+			inserted_disk_idx[1]=ADVANCED_FD2;
+		}
+         else if(disk.total_images > 1)
          {
-            sprintf((char*)argv, "%s \"%s\" \"%s\"", "px68k", disk.path[0], disk.path[1]);
+            disk.inserted[0] = true;
             disk.inserted[1] = true;
+			strncpy(FDDPATH[0],disk.path[0],MAX_PATH-1);
+			strncpy(FDDPATH[1],disk.path[1],MAX_PATH-1);
+			inserted_disk_idx[0]=0;
+			inserted_disk_idx[1]=1;
          }
-         else
-            sprintf((char*)argv, "%s \"%s\"", "px68k", disk.path[0]);
-
-         disk.inserted[0] = true;
+         else if(disk.total_images > 0)
+		{
+            disk.inserted[0] = true;
+			strncpy(FDDPATH[0],disk.path[0],MAX_PATH-1);
+			inserted_disk_idx[0]=0;
+			inserted_disk_idx[1]=-1;
+		}
+		else{
+			inserted_disk_idx[0]=-1;
+			inserted_disk_idx[1]=-1;
+		}
          isM3U = 1;
 
          parse_cmdline(argv);
