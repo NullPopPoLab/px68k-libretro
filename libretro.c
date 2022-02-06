@@ -48,6 +48,7 @@ const float framerates[][MODES] = {
 bool ADVANCED_M3U=false;
 int ADVANCED_FD1=-1;
 int ADVANCED_FD2=-1;
+static int inserted_disk_idx[2]={-1,-1};
 
 static char RPATH[512];
 static char RETRO_DIR[512];
@@ -205,11 +206,13 @@ static bool set_drive_eject_state(unsigned drive, bool ejected)
    {
       FDD_EjectFD(drive);
       Config.FDDImage[drive][0] = '\0';
+      inserted_disk_idx[drive]=-1;
    }
    else
    {
       strcpy(Config.FDDImage[drive], disk.path[disk.index]);
       FDD_SetFD(drive, Config.FDDImage[drive], disk.readonly[disk.index]);
+      inserted_disk_idx[drive]=disk.index;
    }
    disk.inserted[drive] = !ejected;
    return true;
@@ -306,6 +309,13 @@ static bool disk_get_image_label(unsigned index, char *label, size_t len)
    return false;
 }
 
+static int disk_get_drive_image_index(unsigned drive)
+{
+	if(drive>=get_num_drives())return -1;
+	if(get_drive_eject_state(drive))return -1;
+	return inserted_disk_idx[drive];	
+}
+
 void attach_disk_swap_interface(void)
 {
    memset(&dskcb,0,sizeof(dskcb));
@@ -320,6 +330,7 @@ void attach_disk_swap_interface(void)
    dskcb.set_initial_image = NULL;
    dskcb.get_image_path = disk_get_image_path;
    dskcb.get_image_label = disk_get_image_label;
+   dskcb.get_drive_image_index = disk_get_drive_image_index;
 
    environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT2_INTERFACE, &dskcb);
 }
@@ -592,6 +603,8 @@ static int load(const char *argv)
 		if(ADVANCED_M3U){
 			disk.inserted[0] = (ADVANCED_FD1>=0);
 			disk.inserted[1] = (ADVANCED_FD2>=0);
+			inserted_disk_idx[0]=ADVANCED_FD1;
+			inserted_disk_idx[1]=ADVANCED_FD2;
 		}
          else if(disk.total_images > 1)
          {
@@ -599,11 +612,19 @@ static int load(const char *argv)
             disk.inserted[1] = true;
 			strncpy(FDDPATH[0],disk.path[0],MAX_PATH-1);
 			strncpy(FDDPATH[1],disk.path[1],MAX_PATH-1);
+			inserted_disk_idx[0]=0;
+			inserted_disk_idx[1]=1;
          }
          else if(disk.total_images > 0)
 		{
             disk.inserted[0] = true;
 			strncpy(FDDPATH[0],disk.path[0],MAX_PATH-1);
+			inserted_disk_idx[0]=0;
+			inserted_disk_idx[1]=-1;
+		}
+		else{
+			inserted_disk_idx[0]=-1;
+			inserted_disk_idx[1]=-1;
 		}
          isM3U = 1;
 
