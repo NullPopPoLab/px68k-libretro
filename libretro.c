@@ -411,63 +411,69 @@ static void parse_cmdline(const char *argv);
 
 static bool read_m3u(const char *file)
 {
-   unsigned index = 0;
-   char line[MAX_PATH];
-   char name[MAX_PATH];
-   FILE *f = fopen(file, "r");
-   bool happen=false;
+	unsigned index = 0;
+	char line[MAX_PATH];
+	char name[MAX_PATH];
+	FILE *f = fopen(file, "r");
+	bool happen=false;
 
-   if (!f)
-      return false;
+	if (!f)
+	  return false;
 
-   while (fgets(line, sizeof(line), f) && !happen)
-   {
+	while (fgets(line, sizeof(line), f) && !happen)
+	{
 		char typ,num,rof;
 		char *p=line;
-      if (p[0] == '#')
-         continue;
+		if (p[0] == '#')
+			continue;
 
-      char *carriage_return = strchr(p, '\r');
-      if (carriage_return)
-         *carriage_return = '\0';
+		char *carriage_return = strchr(p, '\r');
+		if (carriage_return)
+			*carriage_return = '\0';
 
-      char *newline = strchr(p, '\n');
-      if (newline)
-         *newline = '\0';
+		char *newline = strchr(p, '\n');
+		if (newline)
+			*newline = '\0';
 
-      // Remove any beginning and ending quotes as these can cause issues when feeding the paths into command line later
-      if (p[0] == '"')
-          memmove(p, p + 1, strlen(p));
+		// Remove any beginning and ending quotes as these can cause issues when feeding the paths into command line later
+		if (p[0] == '"')
+			 memmove(p, p + 1, strlen(p));
 
-      if (p[strlen(p) - 1] == '"')
-          p[strlen(p) - 1]  = '\0';
+		if (p[strlen(p) - 1] == '"')
+			p[strlen(p) - 1]  = '\0';
 
-      if (p[0] != '\0')
-      {
-         char image_label[4096];
-         char *custom_label;
-         size_t len = 0;
+		if (p[0] != '\0')
+		{
+			char image_label[4096];
+			char *custom_label;
+			size_t len = 0;
 
-		if(*p=='*'){
-			// advanced mark 
-			ADVANCED_M3U=true;
-			++p;
+			if(*p=='*'){
+				// advanced mark 
+				ADVANCED_M3U=true;
+				++p;
 
-			if(*p && *p!=';')typ=*p++;
-			else typ=0;
-			if(*p && *p!=';')num=*p++;
-			else num='0';
-			if(*p=='!'){rof=1; ++p;}
-			else rof=0;
-			if(*p==';')++p;
+				if(*p && *p!=';')typ=*p++;
+				else typ=0;
+				if(*p && *p!=';')num=*p++;
+				else num='0';
+				if(*p=='!'){rof=1; ++p;}
+				else rof=0;
+				if(*p==';')++p;
+			}
+			else{
+				typ='F';
+				num=0;
+				rof=0;
+			}
 
 			custom_label = strchr(p, '|');
 			if (custom_label)*custom_label++=0;
 
-	         if (is_path_absolute(p))
-	            strncpy(name, p, sizeof(name));
-	         else
-	            snprintf(name, sizeof(name), "%s%c%s", base_dir, slash, p);
+			 if (is_path_absolute(p))
+			    strncpy(name, p, sizeof(name));
+			 else
+			    snprintf(name, sizeof(name), "%s%c%s", base_dir, slash, p);
 
 			switch(typ){
 				case 'F': /* floppy drive */
@@ -499,8 +505,8 @@ static bool read_m3u(const char *file)
 					break;
 				}
 
-	            /* copy path */
-	            strncpy(disk.path[index], name, sizeof(disk.path[index]));
+			    /* copy path */
+			    strncpy(disk.path[index], name, sizeof(disk.path[index]));
 				disk.readonly[index]=rof;	
 
 				/* extract base name from path for labels */
@@ -546,13 +552,12 @@ static bool read_m3u(const char *file)
 				break;
 			}
 		}
-      }
-   }
+	}
 
-   disk.total_images = index;
-   fclose(f);
+	disk.total_images = index;
+	fclose(f);
 
-   return !happen;
+	return !happen;
 }
 
 static void Add_Option(const char* option)
