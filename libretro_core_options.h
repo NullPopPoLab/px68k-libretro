@@ -77,6 +77,17 @@ struct retro_core_option_definition option_defs_us[] = {
       "disabled"
    },
    {
+      "px68k_use_midi",
+      "Use MIDI",
+      NULL,
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL,       NULL },
+      },
+      "disabled"
+   },
+   {
       "px68k_menufontsize",
       "Menu Font Size",
       NULL,

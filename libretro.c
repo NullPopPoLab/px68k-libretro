@@ -1031,6 +1031,20 @@ static void update_variables(void)
    }
 #endif
 
+   var.key = "px68k_use_midi";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      //fprintf(stderr, "value: %s\n", var.value);
+      if (!strcmp(var.value, "disabled"))
+         Config.MIDI_SW = false;
+      if (!strcmp(var.value, "enabled"))
+         Config.MIDI_SW = true;
+
+      //fprintf(stderr, "[libretro-test]: Analog: %s.\n",Config.MIDI_SW?"ON":"OFF");
+   }
+
    update_variable_disk_drive_swap();
 
    var.key = "px68k_menufontsize";
