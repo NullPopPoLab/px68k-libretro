@@ -9,6 +9,7 @@
 #include	"sysport.h"
 #include	"x68kmemory.h"
 #include	"sram.h"
+#include <boolern.h>
 
 extern bool opt_sram;
 
