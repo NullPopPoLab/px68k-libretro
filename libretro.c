@@ -415,11 +415,12 @@ static bool read_m3u(const char *file)
    char line[MAX_PATH];
    char name[MAX_PATH];
    FILE *f = fopen(file, "r");
+   bool happen=false;
 
    if (!f)
       return false;
 
-   while (fgets(line, sizeof(line), f) && index < sizeof(disk.path) / sizeof(disk.path[0]))
+   while (fgets(line, sizeof(line), f) && !happen)
    {
 		char typ,num,rof;
 		char *p=line;
@@ -485,7 +486,19 @@ static bool read_m3u(const char *file)
 					FDDRO[1]=rof;
 					strncpy(FDDPATH[1],name,MAX_PATH-1);
 					break;
+
+					default:
+					happen=true;
+					if (log_cb)log_cb(RETRO_LOG_ERROR, "[libretro]: %c is invalid FDD number\n", num);
+					break;
 				}
+
+				if(index >= MAX_DISKS){
+					happen=true;
+					if (log_cb)log_cb(RETRO_LOG_ERROR, "%s\n", "[libretro]: FD index over");
+					break;
+				}
+
 	            /* copy path */
 	            strncpy(disk.path[index], name, sizeof(disk.path[index]));
 				disk.readonly[index]=rof;	
@@ -497,12 +510,6 @@ static bool read_m3u(const char *file)
 					strncpy(disk.label[index], image_label, sizeof(disk.label[index]));
 				}
 				index++;
-				break;
-
-				case 'T': /* tape drive */
-				break;
-
-				case 'R': /* ROM slot */
 				break;
 
 				case 'H': /* hard drive */
@@ -522,10 +529,20 @@ static bool read_m3u(const char *file)
 					case '4': /* 4th hard drive */
 					strncpy(HDDPATH[3],name,MAX_PATH-1);
 					break;
+
+					default:
+					happen=true;
+					if (log_cb)log_cb(RETRO_LOG_ERROR, "[libretro]: %c is invalid HDD number\n", num);
+					break;
 				}
 				break;
 
+				case 'T': /* tape drive */
+				case 'R': /* ROM slot */
 				case 'O': /* optical drive */
+				default:
+				happen=true;
+				if (log_cb)log_cb(RETRO_LOG_ERROR, "[libretro]: %c not supported in m3u\n", typ);
 				break;
 			}
 		}
@@ -535,7 +552,7 @@ static bool read_m3u(const char *file)
    disk.total_images = index;
    fclose(f);
 
-   return (disk.total_images != 0);
+   return !happen;
 }
 
 static void Add_Option(const char* option)
