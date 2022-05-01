@@ -10,6 +10,8 @@
 #include	"x68kmemory.h"
 #include	"sram.h"
 
+extern bool opt_sram;
+
 uint8_t	SRAM[0x4000];
 uint8_t	SRAMFILE[] = "sram.dat";
 
@@ -21,7 +23,7 @@ void SRAM_VirusCheck(void)
 	if (!Config.SRAMWarning) return;				// Warning発生モードでなければ帰る
 
 	if ( (cpu_readmem24_dword(0xed3f60)==0x60000002)
-	   &&(cpu_readmem24_dword(0xed0010)==0x00ed3f60) )		// 特定うぃるすにしか効かないよ~
+	   &&(cpu_readmem24_dword(0xed0010)==0x00ed3f60) )		// 特定うぃるすにしか効かないよ潤ｵ
 	{
 		SRAM_Cleanup();
 		SRAM_Init();			// Virusクリーンアップ後のデータを書き込んでおく
@@ -41,6 +43,8 @@ void SRAM_Init(void)
 	for (i=0; i<0x4000; i++)
 		SRAM[i] = 0xFF;
 
+	if(!opt_sram)return;
+
 	fp = File_OpenCurDir(SRAMFILE);
 	if (fp)
 	{
@@ -57,7 +61,7 @@ void SRAM_Init(void)
 
 
 // -----------------------------------------------------------------------
-//   撤収~
+//   撤収潤ｵ
 // -----------------------------------------------------------------------
 void SRAM_Cleanup(void)
 {
@@ -71,6 +75,8 @@ void SRAM_Cleanup(void)
 		SRAM[i] = SRAM[i+1];
 		SRAM[i+1] = tmp;
 	}
+
+	if(!opt_sram)return;
 
 	fp = File_OpenCurDir(SRAMFILE);
 	if (!fp)

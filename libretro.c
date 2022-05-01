@@ -58,6 +58,7 @@ char Core_old_Key_State[512];
 static bool joypad1, joypad2;
 
 static bool opt_analog;
+bool opt_sram=false;
 
 int retrow = 800;
 int retroh = 600;
@@ -797,6 +798,20 @@ static void update_variables(void)
    int i = 0, snd_opt = 0;
    char key[256] = {0};
    struct retro_variable var = {0};
+
+   var.key = "px68k_use_sram";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      //fprintf(stderr, "value: %s\n", var.value);
+      if (!strcmp(var.value, "disabled"))
+         opt_sram = false;
+      if (!strcmp(var.value, "enabled"))
+         opt_sram = true;
+
+      //fprintf(stderr, "[libretro-test]: Analog: %s.\n",opt_sram?"ON":"OFF");
+   }
 
    strcpy(key, "px68k_joytype");
    var.key = key;

@@ -55,6 +55,17 @@ struct retro_core_option_definition option_defs_us[] = {
     * Adding more variables and rearranging them is safe. */
 
    {
+      "px68k_use_sram",
+      "Use SRAM",
+      NULL,
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL,       NULL },
+      },
+      "disabled"
+   },
+   {
       "px68k_menufontsize",
       "Menu Font Size",
       NULL,
