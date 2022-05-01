@@ -75,6 +75,7 @@ unsigned input_devices[MAX_PADS]={
 
 static bool opt_analog;
 bool opt_disk_config=false;
+bool opt_sram=false;
 
 int retrow = 800;
 int retroh = 600;
@@ -881,6 +882,20 @@ static void update_variables(void)
          opt_disk_config = true;
 
       //fprintf(stderr, "[libretro-test]: Analog: %s.\n",opt_disk_config?"ON":"OFF");
+   }
+
+   var.key = "px68k_use_sram";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      //fprintf(stderr, "value: %s\n", var.value);
+      if (!strcmp(var.value, "disabled"))
+         opt_sram = false;
+      if (!strcmp(var.value, "enabled"))
+         opt_sram = true;
+
+      //fprintf(stderr, "[libretro-test]: Analog: %s.\n",opt_sram?"ON":"OFF");
    }
 
 #if 0
