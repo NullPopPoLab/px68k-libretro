@@ -9,7 +9,7 @@
 #include	"sysport.h"
 #include	"x68kmemory.h"
 #include	"sram.h"
-#include "../libretro-common/include/boolern.h"
+#include "../libretro-common/include/boolean.h"
 
 extern bool opt_sram;
 
