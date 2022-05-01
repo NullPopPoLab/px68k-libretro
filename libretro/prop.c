@@ -35,6 +35,8 @@
 #include "fileio.h"
 #include "prop.h"
 
+extern bool opt_disk_config;
+
 uint8_t	LastCode = 0;
 uint8_t	KEYCONFFILE[] = "xkeyconf.dat";
 
@@ -167,6 +169,8 @@ void LoadConfig(void)
 		strncpy(filepath, buf, sizeof(filepath));
 	else
 		filepath[0] = 0;
+
+	if(!opt_disk_config)return;
 
 	if (Config.save_fdd_path)
 		for (i = 0; i < 2; i++) {
