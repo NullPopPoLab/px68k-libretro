@@ -470,7 +470,7 @@ static bool read_m3u(const char *file)
 			}
 			else{
 				typ='F';
-				num=0;
+				num='0';
 				rof=0;
 			}
 
@@ -490,14 +490,12 @@ static bool read_m3u(const char *file)
 
 					case '1': /* 1st floppy drive */
 					if(*p)ADVANCED_FD1=index;
-					strncpy(FDDPATH[0],p,MAX_PATH-1);
 					FDDRO[0]=rof;
 					strncpy(FDDPATH[0],name,MAX_PATH-1);
 					break;
 
 					case '2': /* 2nd floppy drive */
 					if(*p)ADVANCED_FD2=index;
-					strncpy(FDDPATH[1],p,MAX_PATH-1);
 					FDDRO[1]=rof;
 					strncpy(FDDPATH[1],name,MAX_PATH-1);
 					break;
@@ -505,8 +503,8 @@ static bool read_m3u(const char *file)
 					default:
 					happen=true;
 					if (log_cb)log_cb(RETRO_LOG_ERROR, "[libretro]: %c is invalid FDD number\n", num);
-					break;
 				}
+				if(happen)break;
 
 				if(index >= MAX_DISKS){
 					happen=true;
@@ -640,6 +638,7 @@ static int load(const char *argv)
          else if(disk.total_images > 0)
 		{
             disk.inserted[0] = true;
+            disk.inserted[1] = false;
 			strncpy(FDDPATH[0],disk.path[0],MAX_PATH-1);
 			inserted_disk_idx[0]=0;
 			inserted_disk_idx[1]=-1;
