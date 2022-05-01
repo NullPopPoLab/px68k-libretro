@@ -34,6 +34,7 @@
 #include "keyboard.h"
 #include "fileio.h"
 #include "prop.h"
+#include "../libretro-common/include/boolean.h"
 
 extern bool opt_disk_config;
 
