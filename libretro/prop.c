@@ -98,7 +98,7 @@ static void LoadDefaults(void)
 	Config.DSAlert = 1;
 	Config.Sound_LPF = 1;
 	Config.SoundROMEO = 1;
-	Config.MIDI_SW = 1;
+	Config.MIDI_SW = 0;
 	Config.MIDI_Reset = 1;
 	Config.MIDI_Type = 1;
 	Config.JoySwap = 0;
