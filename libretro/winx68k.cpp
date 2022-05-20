@@ -799,8 +799,10 @@ extern "C" void exec_app_retro(){
 
   		int i;
 
-   		for(i=0;i<320;i++)
+		for(i=0;i<335;i++)
       			Core_Key_State[i]=input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0,i) ? 0x80: 0;
+		for(i=380;i<400;i++)
+			Core_Key_State[i]=input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0,i) ? 0x80: 0;
 
       	Core_Key_State[RETROK_XFX] = 0;
 
