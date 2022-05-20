@@ -806,8 +806,29 @@ extern "C" void exec_app_retro(){
 
 		for(i=0;i<335;i++)
       			Core_Key_State[i]=input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0,i) ? 0x80: 0;
-		for(i=380;i<400;i++)
+		for(i=376;i<400;i++)
 			Core_Key_State[i]=input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0,i) ? 0x80: 0;
+
+   		if(Core_Key_State[RETROK_KP789]){
+   		    if(Core_Key_State[RETROK_KP369] && !Core_Key_State[RETROK_KP147])Core_Key_State[RETROK_KP9]=0x80;
+   		    else if(Core_Key_State[RETROK_KP147] && !Core_Key_State[RETROK_KP369])Core_Key_State[RETROK_KP7]=0x80;
+   		    else Core_Key_State[RETROK_KP8]=0x80;
+   		}
+   		if(Core_Key_State[RETROK_KP123]){
+   		    if(Core_Key_State[RETROK_KP369] && !Core_Key_State[RETROK_KP147])Core_Key_State[RETROK_KP3]=0x80;
+   		    else if(Core_Key_State[RETROK_KP147] && !Core_Key_State[RETROK_KP369])Core_Key_State[RETROK_KP1]=0x80;
+   		    else Core_Key_State[RETROK_KP2]=0x80;
+   		}
+   		if(Core_Key_State[RETROK_KP147]){
+   		    if(Core_Key_State[RETROK_KP789] && !Core_Key_State[RETROK_KP123])Core_Key_State[RETROK_KP7]=0x80;
+   		    else if(Core_Key_State[RETROK_KP123] && !Core_Key_State[RETROK_KP789])Core_Key_State[RETROK_KP1]=0x80;
+   		    else Core_Key_State[RETROK_KP4]=0x80;
+   		}
+   		if(Core_Key_State[RETROK_KP369]){
+   		    if(Core_Key_State[RETROK_KP789] && !Core_Key_State[RETROK_KP123])Core_Key_State[RETROK_KP9]=0x80;
+   		    else if(Core_Key_State[RETROK_KP123] && !Core_Key_State[RETROK_KP789])Core_Key_State[RETROK_KP3]=0x80;
+   		    else Core_Key_State[RETROK_KP6]=0x80;
+   		}
 
       	Core_Key_State[RETROK_XFX] = 0;
 
