@@ -790,14 +790,41 @@ extern "C" void exec_app_retro(){
  		//end_loop=1;
 
 		static int mbL = 0, mbR = 0;
+		int mouse_x=0,mouse_y=0,mouse_l=0,mouse_r=0;
 
-	      	int mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-		int mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+		switch(input_devices[0]){
+			case RETRO_DEVICE_MOUSE:
+			mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+			mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+			break;
+
+			case RETRO_DEVICE_KEYBOARD:{
+		    int use_stick;
+		    int16_t analog_x, analog_y;
+		    int mouse_move_x, mouse_move_y;
+
+		    use_stick = RETRO_DEVICE_INDEX_ANALOG_LEFT;
+		    analog_x = input_state_cb(0, RETRO_DEVICE_ANALOG, use_stick, RETRO_DEVICE_ID_ANALOG_X);
+		    analog_y = input_state_cb(0, RETRO_DEVICE_ANALOG, use_stick, RETRO_DEVICE_ID_ANALOG_Y);
+
+		    mouse_x = (int)(analog_x * ((float)10 / 0x10000));
+		    mouse_y = (int)(analog_y * ((float)10 / 0x10000));
+			}break;
+		}
 
      		Mouse_Event(0, mouse_x, mouse_y);
 
-		int mouse_l    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
-		int mouse_r    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+		switch(input_devices[0]){
+			case RETRO_DEVICE_MOUSE:
+			mouse_l    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+			mouse_r    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+			break;
+
+			case RETRO_DEVICE_KEYBOARD:
+			mouse_l    = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_1);
+			mouse_r    = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_2);
+			break;
+		}
 
   	        if(mbL==0 && mouse_l){
       			mbL=1;
