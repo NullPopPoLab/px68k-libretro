@@ -956,6 +956,7 @@ static void update_variables(void)
 
    /* PX68K Menu */
 
+#if 0
    var.key = "px68k_joy_mouse";
    var.value = NULL;
 
@@ -984,6 +985,9 @@ static void update_variables(void)
 
    var.key = "px68k_no_wait_mode";
    var.value = NULL;
+#else
+      Mouse_StartCapture(true);
+#endif
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
