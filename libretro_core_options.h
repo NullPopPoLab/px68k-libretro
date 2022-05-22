@@ -319,6 +319,7 @@ struct retro_core_option_definition option_defs_us[] = {
    },
 
    /* from PX68K Menu */
+#if 0
    {
       "px68k_joy_mouse",
       "Joy/Mouse",
@@ -341,6 +342,7 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "TRIG1 TRIG2"
    },
+#endif
    {
       "px68k_no_wait_mode",
       "No Wait Mode",

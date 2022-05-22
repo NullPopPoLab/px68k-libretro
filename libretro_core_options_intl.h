@@ -251,6 +251,7 @@ struct retro_core_option_definition option_def_fr[] = {
    },
 
    /* from PX68K Menu */
+#if 0
    {
       "px68k_joy_mouse",
       "Manette /sourie",
@@ -273,6 +274,7 @@ struct retro_core_option_definition option_def_fr[] = {
       },
       "BOUTON1 BOUTON2"
    },
+#endif
    {
       "px68k_no_wait_mode",
       "Mode sans attente",
