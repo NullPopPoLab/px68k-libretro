@@ -69,7 +69,7 @@ extern "C" {
 #      endif
 #    endif
 #  else
-#      if defined(__GNUC__) && __GNUC__ >= 4 && !defined(__CELLOS_LV2__)
+#      if defined(__GNUC__) && __GNUC__ >= 4
 #        define RETRO_API RETRO_CALLCONV __attribute__((__visibility__("default")))
 #      else
 #        define RETRO_API RETRO_CALLCONV
@@ -761,6 +761,9 @@ enum retro_mod
                                             * state of rumble motors in controllers.
                                             * A strong and weak motor is supported, and they can be
                                             * controlled indepedently.
+                                            * Should be called from either retro_init() or retro_load_game().
+                                            * Should not be called from retro_set_environment().
+                                            * Returns false if rumble functionality is unavailable.
                                             */
 #define RETRO_ENVIRONMENT_GET_INPUT_DEVICE_CAPABILITIES 24
                                            /* uint64_t * --
@@ -1176,6 +1179,13 @@ enum retro_mod
                                             * retro_core_option_definition structs to RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL.
                                             * This allows the core to additionally set option sublabel information
                                             * and/or provide localisation support.
+                                            *
+                                            * If version is >= 2, core options may instead be set by passing
+                                            * a retro_core_options_v2 struct to RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2,
+                                            * or an array of retro_core_options_v2 structs to
+                                            * RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL. This allows the core
+                                            * to additionally set optional core option category information
+                                            * for frontends with core option category support.
                                             */
 
 #define RETRO_ENVIRONMENT_SET_CORE_OPTIONS 53
@@ -1217,7 +1227,7 @@ enum retro_mod
                                             * default value is NULL, the first entry in the
                                             * retro_core_option_definition::values array is treated as the default.
                                             *
-                                            * The number of possible options should be very limited,
+                                            * The number of possible option values should be very limited,
                                             * and must be less than RETRO_NUM_CORE_OPTION_VALUES_MAX.
                                             * i.e. it should be feasible to cycle through options
                                             * without a keyboard.
@@ -1250,6 +1260,7 @@ enum retro_mod
                                             * This should only be called if RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION
                                             * returns an API version of >= 1.
                                             * This should be called instead of RETRO_ENVIRONMENT_SET_VARIABLES.
+                                            * This should be called instead of RETRO_ENVIRONMENT_SET_CORE_OPTIONS.
                                             * This should be called the first time as early as
                                             * possible (ideally in retro_set_environment).
                                             * Afterwards it may be called again for the core to communicate
@@ -1798,9 +1809,7 @@ enum retro_mod
                                             * This is used for games which consist of multiple images and
                                             * must be manually swapped out by the user (e.g. PSX, floppy disk
                                             * based systems).
-                                            */
-
-/* VFS functionality */
+                                            *//* VFS functionality */
 
 /* File paths:
  * File paths passed as parameters when using this API shall be well formed UNIX-style,
@@ -2689,6 +2698,30 @@ struct retro_frame_time_callback
    retro_usec_t reference;
 };
 
+/* Notifies a libretro core of the current occupancy
+ * level of the frontend audio buffer.
+ *
+ * - active: 'true' if audio buffer is currently
+ *           in use. Will be 'false' if audio is
+ *           disabled in the frontend
+ *
+ * - occupancy: Given as a value in the range [0,100],
+ *              corresponding to the occupancy percentage
+ *              of the audio buffer
+ *
+ * - underrun_likely: 'true' if the frontend expects an
+ *                    audio buffer underrun during the
+ *                    next frame (indicates that a core
+ *                    should attempt frame skipping)
+ *
+ * It will be called right before retro_run() every frame. */
+typedef void (RETRO_CALLCONV *retro_audio_buffer_status_callback_t)(
+      bool active, unsigned occupancy, bool underrun_likely);
+struct retro_audio_buffer_status_callback
+{
+   retro_audio_buffer_status_callback_t callback;
+};
+
 /* Pass this to retro_video_refresh_t if rendering to hardware.
  * Passing NULL to retro_video_refresh_t is still a frame dupe as normal.
  * */
@@ -3212,6 +3245,213 @@ struct retro_system_info
    bool        block_extract;
 };
 
+/* Defines overrides which modify frontend handling of
+ * specific content file types.
+ * An array of retro_system_content_info_override is
+ * passed to RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE
+ * NOTE: In the following descriptions, references to
+ *       retro_load_game() may be replaced with
+ *       retro_load_game_special() */
+struct retro_system_content_info_override
+{
+   /* A list of file extensions for which the override
+    * should apply, delimited by a 'pipe' character
+    * (e.g. "md|sms|gg")
+    * Permitted file extensions are limited to those
+    * included in retro_system_info::valid_extensions
+    * and/or retro_subsystem_rom_info::valid_extensions */
+   const char *extensions;
+
+   /* Overrides the need_fullpath value set in
+    * retro_system_info and/or retro_subsystem_rom_info.
+    * To reiterate:
+    *
+    * If need_fullpath is true and retro_load_game() is called:
+    *    - retro_game_info::path is guaranteed to contain a valid
+    *      path to an existent file
+    *    - retro_game_info::data and retro_game_info::size are invalid
+    *
+    * If need_fullpath is false and retro_load_game() is called:
+    *    - retro_game_info::path may be NULL
+    *    - retro_game_info::data and retro_game_info::size are guaranteed
+    *      to be valid
+    *
+    * In addition:
+    *
+    * If need_fullpath is true and retro_load_game() is called:
+    *    - retro_game_info_ext::full_path is guaranteed to contain a valid
+    *      path to an existent file
+    *    - retro_game_info_ext::archive_path may be NULL
+    *    - retro_game_info_ext::archive_file may be NULL
+    *    - retro_game_info_ext::dir is guaranteed to contain a valid path
+    *      to the directory in which the content file exists
+    *    - retro_game_info_ext::name is guaranteed to contain the
+    *      basename of the content file, without extension
+    *    - retro_game_info_ext::ext is guaranteed to contain the
+    *      extension of the content file in lower case format
+    *    - retro_game_info_ext::data and retro_game_info_ext::size
+    *      are invalid
+    *
+    * If need_fullpath is false and retro_load_game() is called:
+    *    - If retro_game_info_ext::file_in_archive is false:
+    *       - retro_game_info_ext::full_path is guaranteed to contain
+    *         a valid path to an existent file
+    *       - retro_game_info_ext::archive_path may be NULL
+    *       - retro_game_info_ext::archive_file may be NULL
+    *       - retro_game_info_ext::dir is guaranteed to contain a
+    *         valid path to the directory in which the content file exists
+    *       - retro_game_info_ext::name is guaranteed to contain the
+    *         basename of the content file, without extension
+    *       - retro_game_info_ext::ext is guaranteed to contain the
+    *         extension of the content file in lower case format
+    *    - If retro_game_info_ext::file_in_archive is true:
+    *       - retro_game_info_ext::full_path may be NULL
+    *       - retro_game_info_ext::archive_path is guaranteed to
+    *         contain a valid path to an existent compressed file
+    *         inside which the content file is located
+    *       - retro_game_info_ext::archive_file is guaranteed to
+    *         contain a valid path to an existent content file
+    *         inside the compressed file referred to by
+    *         retro_game_info_ext::archive_path
+    *            e.g. for a compressed file '/path/to/foo.zip'
+    *            containing 'bar.sfc'
+    *             > retro_game_info_ext::archive_path will be '/path/to/foo.zip'
+    *             > retro_game_info_ext::archive_file will be 'bar.sfc'
+    *       - retro_game_info_ext::dir is guaranteed to contain a
+    *         valid path to the directory in which the compressed file
+    *         (containing the content file) exists
+    *       - retro_game_info_ext::name is guaranteed to contain
+    *         EITHER
+    *         1) the basename of the compressed file (containing
+    *            the content file), without extension
+    *         OR
+    *         2) the basename of the content file inside the
+    *            compressed file, without extension
+    *         In either case, a core should consider 'name' to
+    *         be the canonical name/ID of the the content file
+    *       - retro_game_info_ext::ext is guaranteed to contain the
+    *         extension of the content file inside the compressed file,
+    *         in lower case format
+    *    - retro_game_info_ext::data and retro_game_info_ext::size are
+    *      guaranteed to be valid */
+   bool need_fullpath;
+
+   /* If need_fullpath is false, specifies whether the content
+    * data buffer available in retro_load_game() is 'persistent'
+    *
+    * If persistent_data is false and retro_load_game() is called:
+    *    - retro_game_info::data and retro_game_info::size
+    *      are valid only until retro_load_game() returns
+    *    - retro_game_info_ext::data and retro_game_info_ext::size
+    *      are valid only until retro_load_game() returns
+    *
+    * If persistent_data is true and retro_load_game() is called:
+    *    - retro_game_info::data and retro_game_info::size
+    *      are valid until retro_deinit() returns
+    *    - retro_game_info_ext::data and retro_game_info_ext::size
+    *      are valid until retro_deinit() returns */
+   bool persistent_data;
+};
+
+/* Similar to retro_game_info, but provides extended
+ * information about the source content file and
+ * game memory buffer status.
+ * And array of retro_game_info_ext is returned by
+ * RETRO_ENVIRONMENT_GET_GAME_INFO_EXT
+ * NOTE: In the following descriptions, references to
+ *       retro_load_game() may be replaced with
+ *       retro_load_game_special() */
+struct retro_game_info_ext
+{
+   /* - If file_in_archive is false, contains a valid
+    *   path to an existent content file (UTF-8 encoded)
+    * - If file_in_archive is true, may be NULL */
+   const char *full_path;
+
+   /* - If file_in_archive is false, may be NULL
+    * - If file_in_archive is true, contains a valid path
+    *   to an existent compressed file inside which the
+    *   content file is located (UTF-8 encoded) */
+   const char *archive_path;
+
+   /* - If file_in_archive is false, may be NULL
+    * - If file_in_archive is true, contain a valid path
+    *   to an existent content file inside the compressed
+    *   file referred to by archive_path (UTF-8 encoded)
+    *      e.g. for a compressed file '/path/to/foo.zip'
+    *      containing 'bar.sfc'
+    *      > archive_path will be '/path/to/foo.zip'
+    *      > archive_file will be 'bar.sfc' */
+   const char *archive_file;
+
+   /* - If file_in_archive is false, contains a valid path
+    *   to the directory in which the content file exists
+    *   (UTF-8 encoded)
+    * - If file_in_archive is true, contains a valid path
+    *   to the directory in which the compressed file
+    *   (containing the content file) exists (UTF-8 encoded) */
+   const char *dir;
+
+   /* Contains the canonical name/ID of the content file
+    * (UTF-8 encoded). Intended for use when identifying
+    * 'complementary' content named after the loaded file -
+    * i.e. companion data of a different format (a CD image
+    * required by a ROM), texture packs, internally handled
+    * save files, etc.
+    * - If file_in_archive is false, contains the basename
+    *   of the content file, without extension
+    * - If file_in_archive is true, then string is
+    *   implementation specific. A frontend may choose to
+    *   set a name value of:
+    *   EITHER
+    *   1) the basename of the compressed file (containing
+    *      the content file), without extension
+    *   OR
+    *   2) the basename of the content file inside the
+    *      compressed file, without extension
+    *   RetroArch sets the 'name' value according to (1).
+    *   A frontend that supports routine loading of
+    *   content from archives containing multiple unrelated
+    *   content files may set the 'name' value according
+    *   to (2). */
+   const char *name;
+
+   /* - If file_in_archive is false, contains the extension
+    *   of the content file in lower case format
+    * - If file_in_archive is true, contains the extension
+    *   of the content file inside the compressed file,
+    *   in lower case format */
+   const char *ext;
+
+   /* String of implementation specific meta-data. */
+   const char *meta;
+
+   /* Memory buffer of loaded game content. Will be NULL:
+    * IF
+    * - retro_system_info::need_fullpath is true and
+    *   retro_system_content_info_override::need_fullpath
+    *   is unset
+    * OR
+    * - retro_system_content_info_override::need_fullpath
+    *   is true */
+   const void *data;
+
+   /* Size of game content memory buffer, in bytes */
+   size_t size;
+
+   /* True if loaded content file is inside a compressed
+    * archive */
+   bool file_in_archive;
+
+   /* - If data is NULL, value is unset/ignored
+    * - If data is non-NULL:
+    *   - If persistent_data is false, data and size are
+    *     valid only until retro_load_game() returns
+    *   - If persistent_data is true, data and size are
+    *     are valid until retro_deinit() returns */
+   bool persistent_data;
+};
+
 struct retro_game_geometry
 {
    unsigned base_width;    /* Nominal video width of game. */
@@ -3323,6 +3563,143 @@ struct retro_core_options_intl
    struct retro_core_option_definition *local;
 };
 
+struct retro_core_option_v2_category
+{
+   /* Variable uniquely identifying the
+    * option category. Valid key characters
+    * are [a-z, A-Z, 0-9, _, -] */
+   const char *key;
+
+   /* Human-readable category description
+    * > Used as category menu label when
+    *   frontend has core option category
+    *   support */
+   const char *desc;
+
+   /* Human-readable category information
+    * > Used as category menu sublabel when
+    *   frontend has core option category
+    *   support
+    * > Optional (may be NULL or an empty
+    *   string) */
+   const char *info;
+};
+
+struct retro_core_option_v2_definition
+{
+   /* Variable to query in RETRO_ENVIRONMENT_GET_VARIABLE.
+    * Valid key characters are [a-z, A-Z, 0-9, _, -] */
+   const char *key;
+
+   /* Human-readable core option description
+    * > Used as menu label when frontend does
+    *   not have core option category support
+    *   e.g. "Video > Aspect Ratio" */
+   const char *desc;
+
+   /* Human-readable core option description
+    * > Used as menu label when frontend has
+    *   core option category support
+    *   e.g. "Aspect Ratio", where associated
+    *   retro_core_option_v2_category::desc
+    *   is "Video"
+    * > If empty or NULL, the string specified by
+    *   desc will be used as the menu label
+    * > Will be ignored (and may be set to NULL)
+    *   if category_key is empty or NULL */
+   const char *desc_categorized;
+
+   /* Human-readable core option information
+    * > Used as menu sublabel */
+   const char *info;
+
+   /* Human-readable core option information
+    * > Used as menu sublabel when frontend
+    *   has core option category support
+    *   (e.g. may be required when info text
+    *   references an option by name/desc,
+    *   and the desc/desc_categorized text
+    *   for that option differ)
+    * > If empty or NULL, the string specified by
+    *   info will be used as the menu sublabel
+    * > Will be ignored (and may be set to NULL)
+    *   if category_key is empty or NULL */
+   const char *info_categorized;
+
+   /* Variable specifying category (e.g. "video",
+    * "audio") that will be assigned to the option
+    * if frontend has core option category support.
+    * > Categorized options will be displayed in a
+    *   subsection/submenu of the frontend core
+    *   option interface
+    * > Specified string must match one of the
+    *   retro_core_option_v2_category::key values
+    *   in the associated retro_core_option_v2_category
+    *   array; If no match is not found, specified
+    *   string will be considered as NULL
+    * > If specified string is empty or NULL, option will
+    *   have no category and will be shown at the top
+    *   level of the frontend core option interface */
+   const char *category_key;
+
+   /* Array of retro_core_option_value structs, terminated by NULL */
+   struct retro_core_option_value values[RETRO_NUM_CORE_OPTION_VALUES_MAX];
+
+   /* Default core option value. Must match one of the values
+    * in the retro_core_option_value array, otherwise will be
+    * ignored */
+   const char *default_value;
+};
+
+struct retro_core_options_v2
+{
+   /* Array of retro_core_option_v2_category structs,
+    * terminated by NULL
+    * > If NULL, all entries in definitions array
+    *   will have no category and will be shown at
+    *   the top level of the frontend core option
+    *   interface
+    * > Will be ignored if frontend does not have
+    *   core option category support */
+   struct retro_core_option_v2_category *categories;
+
+   /* Array of retro_core_option_v2_definition structs,
+    * terminated by NULL */
+   struct retro_core_option_v2_definition *definitions;
+};
+
+struct retro_core_options_v2_intl
+{
+   /* Pointer to a retro_core_options_v2 struct
+    * > US English implementation
+    * > Must point to a valid struct */
+   struct retro_core_options_v2 *us;
+
+   /* Pointer to a retro_core_options_v2 struct
+    * - Implementation for current frontend language
+    * - May be NULL */
+   struct retro_core_options_v2 *local;
+};
+
+/* Used by the frontend to monitor changes in core option
+ * visibility. May be called each time any core option
+ * value is set via the frontend.
+ * - On each invocation, the core must update the visibility
+ *   of any dynamically hidden options using the
+ *   RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY environment
+ *   callback.
+ * - On the first invocation, returns 'true' if the visibility
+ *   of any core option has changed since the last call of
+ *   retro_load_game() or retro_load_game_special().
+ * - On each subsequent invocation, returns 'true' if the
+ *   visibility of any core option has changed since the last
+ *   time the function was called. */
+typedef bool (RETRO_CALLCONV *retro_core_options_update_display_callback_t)(void);
+struct retro_core_options_update_display_callback
+{
+   retro_core_options_update_display_callback_t callback;
+};
+
 struct retro_game_info
 {
    const char *path;       /* Path to game, UTF-8 encoded.
@@ -3367,6 +3744,84 @@ struct retro_framebuffer
    unsigned memory_flags;           /* Flags telling core how the memory has been mapped.
                                        RETRO_MEMORY_TYPE_* flags.
                                        Set by frontend in GET_CURRENT_SOFTWARE_FRAMEBUFFER. */
+};
+
+/* Used by a libretro core to override the current
+ * fastforwarding mode of the frontend */
+struct retro_fastforwarding_override
+{
+   /* Specifies the runtime speed multiplier that
+    * will be applied when 'fastforward' is true.
+    * For example, a value of 5.0 when running 60 FPS
+    * content will cap the fast-forward rate at 300 FPS.
+    * Note that the target multiplier may not be achieved
+    * if the host hardware has insufficient processing
+    * power.
+    * Setting a value of 0.0 (or greater than 0.0 but
+    * less than 1.0) will result in an uncapped
+    * fast-forward rate (limited only by hardware
+    * capacity).
+    * If the value is negative, it will be ignored
+    * (i.e. the frontend will use a runtime speed
+    * multiplier of its own choosing) */
+   float ratio;
+
+   /* If true, fastforwarding mode will be enabled.
+    * If false, fastforwarding mode will be disabled. */
+   bool fastforward;
+
+   /* If true, and if supported by the frontend, an
+    * on-screen notification will be displayed while
+    * 'fastforward' is true.
+    * If false, and if supported by the frontend, any
+    * on-screen fast-forward notifications will be
+    * suppressed */
+   bool notification;
+
+   /* If true, the core will have sole control over
+    * when fastforwarding mode is enabled/disabled;
+    * the frontend will not be able to change the
+    * state set by 'fastforward' until either
+    * 'inhibit_toggle' is set to false, or the core
+    * is unloaded */
+   bool inhibit_toggle;
+};
+
+/* During normal operation. Rate will be equal to the core's internal FPS. */
+#define RETRO_THROTTLE_NONE              0
+
+/* While paused or stepping single frames. Rate will be 0. */
+#define RETRO_THROTTLE_FRAME_STEPPING    1
+
+/* During fast forwarding.
+ * Rate will be 0 if not specifically limited to a maximum speed. */
+#define RETRO_THROTTLE_FAST_FORWARD      2
+
+/* During slow motion. Rate will be less than the core's internal FPS. */
+#define RETRO_THROTTLE_SLOW_MOTION       3
+
+/* While rewinding recorded save states. Rate can vary depending on the rewind
+ * speed or be 0 if the frontend is not aiming for a specific rate. */
+#define RETRO_THROTTLE_REWINDING         4
+
+/* While vsync is active in the video driver and the target refresh rate is
+ * lower than the core's internal FPS. Rate is the target refresh rate. */
+#define RETRO_THROTTLE_VSYNC             5
+
+/* When the frontend does not throttle in any way. Rate will be 0.
+ * An example could be if no vsync or audio output is active. */
+#define RETRO_THROTTLE_UNBLOCKED         6
+
+struct retro_throttle_state
+{
+   /* The current throttling mode. Should be one of the values above. */
+   unsigned mode;
+
+   /* How many times per second the frontend aims to call retro_run.
+    * Depending on the mode, it can be 0 if there is no known fixed rate.
+    * This won't be accurate if the total processing time of the core and
+    * the frontend is longer than what is available for one frame. */
+   float rate;
 };
 
 /* Callbacks */
