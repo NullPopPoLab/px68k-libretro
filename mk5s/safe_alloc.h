@@ -1,6 +1,7 @@
 /* † MKKKKKS † */
 /*!	@brief  Safety Memory Allocator
 	@author  NullPopPo
+	@sa  https://github.com/NullPopPoLab/MKKKKKS
 */
 #ifndef SAFE_ALLOC_H__
 #define SAFE_ALLOC_H__

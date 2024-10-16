@@ -1,19 +1,21 @@
 /* † MKKKKKS † */
 /*!	@brief  Advanced M3U Loader
 	@author  NullPopPo
+	@sa  https://github.com/NullPopPoLab/MKKKKKS
 */
 #include "./advanced_m3u.h"
 #include "./quick_text.h"
+#include "./quick_path.h"
 #include "./safe_alloc.h"
 #include <stdlib.h>
 #include <string.h>
 
 static void am3u_device_reset(AdvancedM3UDevice* inst);
 static bool am3u_device_add_media_internal(AdvancedM3UDevice* inst,int slot,bool readonly,
-	const char* path,size_t pathlen,const char* label,size_t labellen);
+	const QTextRef* basedir,const QTextRef* path,const QTextRef* label);
 
 static void am3u_media_reset(AdvancedM3UMedia* inst);
-static void am3u_media_set(AdvancedM3UMedia* inst,bool readonly,const char* path,size_t pathlen,const char* label,size_t labellen);
+static void am3u_media_set(AdvancedM3UMedia* inst,bool readonly,const QTextRef* basedir,const QTextRef* path,const QTextRef* label);
 
 /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
 AdvancedM3U* am3u_new(){
@@ -47,8 +49,8 @@ typedef struct AdvancedM3UParseWork_{
 	AdvancedM3UParseError cberr;
 	void* user;
 	int lineloc;
-	const char* linebgn;
-	const char* lineend;
+	const QTextRef* line;
+	const QTextRef* basedir;
 	bool aborted;
 }AdvancedM3UParseWork;
 
@@ -56,25 +58,24 @@ typedef struct AdvancedM3UParseWork_{
 static bool am3u_parse_error(AdvancedM3UParseWork* work,int code){
 
 	if(!work->cberr)return true; // ignore all errors 
-	work->aborted=!work->cberr(work->user,code,work->lineloc,work->linebgn,work->lineend);
+	work->aborted=!work->cberr(work->user,code,work->lineloc,work->line);
 	return !work->aborted;
 }
 
 /* ----------------------------------------------------------------------- */
-static bool am3u_parse_line(void* user,const char* bgn,const char* end){
+static bool am3u_parse_line(void* user,const QTextRef* line){
 
 	AdvancedM3UParseWork* work=user;
 	AdvancedM3U* inst=work->inst;
-	const char* cur=bgn;
-	const char* path;
-	const char* label;
-	size_t pathlen,labellen;
+	const char* cur=qtext_bgn(line);
+	const char* end=qtext_end(line);
+	QTextRef path;
+	QTextRef label;
 	int device=inst->device_default,slot=0;
 	bool readonly=false;
 
 	++work->lineloc;
-	work->linebgn=bgn;
-	work->lineend=end;
+	work->line=line;
 
 	// NOP 
 	if(cur>=end)return true;
@@ -147,40 +148,43 @@ static bool am3u_parse_line(void* user,const char* bgn,const char* end){
 	}
 
 	// split custom label 
-	path=cur;
-	label=memchr(cur,'|',end-cur);
-	if(label){
+	const char* lp=memchr(cur,'|',end-cur);
+	if(lp){
 		// custom label after | 
-		pathlen=label-path;
-		++label;
-		labellen=end-label;
+		qtext_ref_q(&path,cur,lp-cur);
+		++lp;
+		qtext_ref_q(&label,lp,end-lp);
+		// trim 
+		qtext_trim_back_c(&path," \t\r");
+		qtext_trim_both_c(&label," \t\r");
 	}
 	else{
 		// no custom label 
-		pathlen=end-cur;
-		labellen=0;
+		qtext_ref_q(&path,cur,end-cur);
+		label=path;
 	}
 
 	// known errors are already detected
 	// other errors means unknown
 
-	if(!am3u_device_add_media_internal(&inst->device_tbl[device],slot,readonly,path,pathlen,label,labellen)){
+	if(!am3u_device_add_media_internal(&inst->device_tbl[device],slot,readonly,work->basedir,&path,&label)){
 		return am3u_parse_error(work,AM3U_ERROR_UNDEFINED);
 	}
 	return true;
 }
 
 /* ----------------------------------------------------------------------- */
-bool am3u_parse(AdvancedM3U* inst,const char* src,size_t srclen,AdvancedM3UParseError cberr,void* user){
+bool am3u_setup_q(AdvancedM3U* inst,const QTextRef* src,const QTextRef* basedir,AdvancedM3UParseError cberr,void* user){
 
 	AdvancedM3UParseWork work;
 	work.inst=inst;
+	work.basedir=basedir;
 	work.cberr=cberr;
 	work.user=user;
 	work.lineloc=0;
 	work.aborted=false;
 
-	qtext_ext_lines(&work,src,src+srclen,am3u_parse_line);
+	qtext_ext_lines_q(&work,src,am3u_parse_line);
 	return !work.aborted;
 }
 
@@ -255,7 +259,7 @@ void am3u_device_set_slots(AdvancedM3UDevice* inst,int size){
 
 /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
 bool am3u_device_add_media_internal(AdvancedM3UDevice* inst,int slot,bool readonly,
-	const char* path,size_t pathlen,const char* label,size_t labellen){
+	const QTextRef* basedir,const QTextRef* path,const QTextRef* label){
 
 	AdvancedM3UMedia* media;
 	int idx;
@@ -265,7 +269,7 @@ bool am3u_device_add_media_internal(AdvancedM3UDevice* inst,int slot,bool readon
 	// add media 
 	idx=inst->changee_used;
 	media=&inst->changee_tbl[inst->changee_used++];
-	am3u_media_set(media,readonly,path,pathlen,label,labellen);
+	am3u_media_set(media,readonly,basedir,path,label);
 
 	// set slot 
 	if(slot>0 && slot<=inst->slot_max)inst->slot_tbl[slot-1]=idx;
@@ -273,8 +277,31 @@ bool am3u_device_add_media_internal(AdvancedM3UDevice* inst,int slot,bool readon
 }
 
 /* ----------------------------------------------------------------------- */
-bool am3u_device_add_media(AdvancedM3UDevice* inst,int slot,bool readonly,const char* path,const char* label){
-	return am3u_device_add_media_internal(inst,slot,readonly,path,strlen(path),label,strlen(label));
+bool am3u_device_add_media(AdvancedM3UDevice* inst,int slot,bool readonly,const QTextRef* basedir,const QTextRef* path,const QTextRef* label){
+	return am3u_device_add_media_internal(inst,slot,readonly,basedir,path,label);
+}
+
+/* ----------------------------------------------------------------------- */
+AdvancedM3UMedia* am3u_device_get_media(AdvancedM3UDevice* inst,int slot){
+
+	if(!inst)return NULL;
+	if(slot<0)return NULL;
+	if(slot>=inst->slot_max)return NULL;
+	int idx=inst->slot_tbl[slot];
+	if(idx<0)return NULL;
+	return &inst->changee_tbl[idx];
+}
+
+/* ----------------------------------------------------------------------- */
+bool am3u_device_set_media(AdvancedM3UDevice* inst,int slot,int idx){
+
+	if(!inst)return false;
+	if(slot<0)return false;
+	if(idx<-1)return false;
+	if(slot>=inst->slot_max)return false;
+	if(idx>=inst->changee_used)return false;
+	inst->slot_tbl[slot]=idx;
+	return true;
 }
 
 /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
@@ -287,11 +314,24 @@ void am3u_media_reset(AdvancedM3UMedia* inst){
 }
 
 /* ----------------------------------------------------------------------- */
-void am3u_media_set(AdvancedM3UMedia* inst,bool readonly,const char* path,size_t pathlen,const char* label,size_t labellen){
+void am3u_media_set(AdvancedM3UMedia* inst,bool readonly,const QTextRef* basedir,const QTextRef* path,const QTextRef* label){
 
 	am3u_media_reset(inst);
 	inst->ready=true;
 	inst->readonly=readonly;
-	inst->path=qtext_alloc(path,path+pathlen);
-	if(label)inst->label=qtext_alloc(label,label+labellen);
+	if(!basedir)inst->path=qtext_alloc_q(path);
+	else if(qtext_is_empty(basedir))inst->path=qtext_alloc_q(path);
+	else{
+		QPathInfo pathinfo;
+		qpath_setup_q(&pathinfo,path);
+		if(!qpath_is_relative(&pathinfo))inst->path=qtext_alloc_q(path);
+		else{
+			QTextRef slash;
+			qtext_ref_c(&slash,"/");
+			inst->path=qtext_combine_q(basedir,&slash,path);
+		}
+	}
+
+	if(label)inst->label=qtext_alloc_q(label);
+	else inst->label=qtext_alloc_q(path);
 }

@@ -1,6 +1,7 @@
 /* † MKKKKKS † */
 /*!	@brief  Quick File Loader
 	@author  NullPopPo
+	@sa  https://github.com/NullPopPoLab/MKKKKKS
 */
 #include "./quick_loader.h"
 #include <stdlib.h>

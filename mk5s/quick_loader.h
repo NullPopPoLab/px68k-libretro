@@ -1,6 +1,7 @@
 /* † MKKKKKS † */
 /*!	@brief  Quick File Loader
 	@author  NullPopPo
+	@sa  https://github.com/NullPopPoLab/MKKKKKS
 */
 #ifndef QUICK_LOADER_H__
 #define QUICK_LOADER_H__

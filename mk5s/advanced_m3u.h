@@ -1,10 +1,12 @@
 /* † MKKKKKS † */
 /*!	@brief  Advanced M3U Loader
 	@author  NullPopPo
+	@sa  https://github.com/NullPopPoLab/MKKKKKS
 */
 #ifndef ADVANCED_M3U_H__
 #define ADVANCED_M3U_H__
 
+#include "./quick_text.h"
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -34,12 +36,11 @@ typedef struct AdvancedM3UMedia_ AdvancedM3UMedia;
 /*!	@param user  any user pointer
 	@param code  error code (AM3U_ERROR_*)
 	@param lineloc  happened line number
-	@param linebgn  first letter pointer of happened line
-	@param lineend  terminate pointer of happened line
+	@param line  happened line
 	@retval false  the caller function will aborted
 	@retval true  the caller function is continueable
 */
-typedef bool (*AdvancedM3UParseError)(void* user,int code,int lineloc,const char* linebgn,const char* lineend);
+typedef bool (*AdvancedM3UParseError)(void* user,int code,int lineloc,const QTextRef* line);
 
 struct AdvancedM3UMedia_{
 	bool ready;
@@ -54,7 +55,7 @@ struct AdvancedM3UDevice_{
 	AdvancedM3UMedia* changee_tbl;
 
 	int slot_max; //!< array size of slot_tbl 
-	int* slot_tbl;
+	int* slot_tbl; //!< selected changee index by slot 
 };
 
 struct AdvancedM3U_{
@@ -75,14 +76,13 @@ void am3u_reset(AdvancedM3U* inst);
 
 //! parse M3U source and put into target AdvancedM3U instance 
 /*!	@param inst  target instance
-	@param src  first letter pointer of M3U source
-	@param srclen  M3U source bytes
+	@param src  M3U source
 	@param cberr  callback by each error
 	@param user  any user pointer
 	@retval false  procudure aborted
 	@retval true  procudure completed
 */
-bool am3u_parse(AdvancedM3U* inst,const char* src,size_t srclen,AdvancedM3UParseError cberr,void* user);
+bool am3u_setup_q(AdvancedM3U* inst,const QTextRef* src,const QTextRef* basedir,AdvancedM3UParseError cberr,void* user);
 
 //! set default device for standard M3U lines 
 /*!	@param inst  target AdvancedM3U instance
@@ -120,10 +120,36 @@ void am3u_device_set_slots(AdvancedM3UDevice* inst,int size);
 	@retval false  failed
 	@retval true  done
 */
-bool am3u_device_add_media(AdvancedM3UDevice* inst,int slot,bool readonly,const char* path,const char* label);
+bool am3u_device_add_media(AdvancedM3UDevice* inst,int slot,bool readonly,const QTextRef* basedir,const QTextRef* path,const QTextRef* label);
+
+//! get current media 
+/*!	@param inst  target device instance
+	@param slot  set to device slot (1 origin, 0 is none)
+	@return  media instance
+*/
+AdvancedM3UMedia* am3u_device_get_media(AdvancedM3UDevice* inst,int slot);
+
+//! set a media to a device slot 
+/*!	@param inst  target device instance
+	@param slot  set to device slot (1 origin, 0 is none)
+	@return  is success
+*/
+bool am3u_device_set_media(AdvancedM3UDevice* inst,int slot,int idx);
 
 #ifdef __cplusplus
 }
 #endif
+
+inline bool am3u_setup_c(AdvancedM3U* inst,const char* src,const char* basedir,AdvancedM3UParseError cberr,void* user){
+	QTextRef src_q,basedir_q;
+	qtext_ref_c(&src_q,src);
+	qtext_ref_c(&basedir_q,basedir);
+	return am3u_setup_q(inst,&src_q,&basedir_q,cberr,user);
+}
+
+//! remove a media from a device slot 
+inline bool am3u_device_remove_media(AdvancedM3UDevice* inst,int slot){
+	return am3u_device_set_media(inst,slot,-1);
+}
 
 #endif // ADVANCED_M3U

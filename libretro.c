@@ -47,6 +47,10 @@
 #include "x68k/rtc.h"
 #include "x68k/scc.h"
 
+#include "../mk5s/advanced_m3u.h"
+#include "../mk5s/quick_loader.h"
+#include "../mk5s/quick_path.h"
+
 #ifdef _WIN32
 #define SLASH '\\'
 #else
@@ -60,6 +64,7 @@
                      * reduced the chances of audio stutters due to mismatch
                      * fps when vsync is used since most monitors are only capable
                      * of upto 60Hz refresh rate. */
+
 enum
 {
    MODES_ACTUAL,
@@ -157,6 +162,7 @@ static unsigned no_content;
 static int opt_rumble_enabled = 1;
 
 #define MAX_DISKS 10
+#define MAX_HDDS 4
 
 typedef enum
 {
@@ -168,16 +174,15 @@ typedef enum
 struct disk_control_interface_t
 {
    unsigned dci_version;                        /* disk control interface version, 0 = use old interface */
-   unsigned total_images;                       /* total number if disk images */
    unsigned index;                              /* currect disk index */
    disk_drive cur_drive;                        /* current active drive */
-   bool inserted[2];                            /* tray state for FDD0/FDD1, 0 = disk ejected, 1 = disk inserted */
-
-   char path[MAX_DISKS][MAX_PATH];              /* disk image paths */
-   char label[MAX_DISKS][MAX_PATH];             /* disk image base name w/o extension */
 
    unsigned g_initial_disc;                     /* initial disk index */
    char g_initial_disc_path[MAX_PATH];          /* initial disk path */
+
+	AdvancedM3U *am3u;
+	AdvancedM3UDevice *am3u_fd;
+	AdvancedM3UDevice *am3u_hd;
 };
 
 static struct disk_control_interface_t disk;
@@ -376,27 +381,28 @@ static void update_variable_disk_drive_swap(void)
 
 static bool set_eject_state(bool ejected)
 {
-   if (disk.index == disk.total_images)
+   if (disk.index == disk.am3u_fd->changee_used)
       return true; /* Frontend is trying to set "no disk in tray" */
 
    if (ejected)
    {
       FDD_EjectFD(disk.cur_drive);
       Config.FDDImage[disk.cur_drive][0] = '\0';
+		disk.am3u_fd->slot_tbl[disk.cur_drive]=-1;
    }
    else
    {
-      strcpy(Config.FDDImage[disk.cur_drive], disk.path[disk.index]);
+      strncpy(Config.FDDImage[disk.cur_drive], disk.am3u_fd->changee_tbl[disk.index].path, MAX_PATH);
       FDD_SetFD(disk.cur_drive, Config.FDDImage[disk.cur_drive], 0);
+		disk.am3u_fd->slot_tbl[disk.cur_drive]=disk.index;
    }
-   disk.inserted[disk.cur_drive] = !ejected;
    return true;
 }
 
 static bool get_eject_state(void)
 {
    update_variable_disk_drive_swap();
-   return !disk.inserted[disk.cur_drive];
+	return !am3u_device_get_media(disk.am3u_fd,disk.cur_drive);
 }
 
 static unsigned get_image_index(void)
@@ -412,35 +418,28 @@ static bool set_image_index(unsigned index)
 
 static unsigned get_num_images(void)
 {
-   return disk.total_images;
+	return disk.am3u_fd->changee_used;
 }
 
 static bool add_image_index(void)
 {
-   if (disk.total_images >= MAX_DISKS)
+   if (disk.am3u_fd->changee_used >= MAX_DISKS)
       return false;
 
-   disk.total_images++;
+   disk.am3u_fd->changee_used++;
    return true;
 }
 
 static bool replace_image_index(unsigned index, const struct retro_game_info *info)
 {
-   char image[MAX_PATH];
-   strcpy(disk.path[index], info->path);
-   extract_basename(image, info->path, sizeof(image));
-   snprintf(disk.label[index], sizeof(disk.label), "%s", image);
-   return true;
-}
+	qtext_free(&disk.am3u_fd->changee_tbl[index].path);
+	qtext_free(&disk.am3u_fd->changee_tbl[index].label);
 
-static bool disk_set_initial_image(unsigned index, const char *path)
-{
-   if (string_is_empty(path))
-      return false;
+	disk.am3u_fd->changee_tbl[index].path=qtext_alloc_c(info->path);
 
-   disk.g_initial_disc = index;
-   strncpy(disk.g_initial_disc_path, path, sizeof(disk.g_initial_disc_path));
-
+	QTextRef label;
+	qpath_filename_noext_c(&label,info->path,false);
+	disk.am3u_fd->changee_tbl[index].label=qtext_alloc_q(&label);
    return true;
 }
 
@@ -449,11 +448,11 @@ static bool disk_get_image_path(unsigned index, char *path, size_t len)
    if (len < 1)
       return false;
 
-   if (index < disk.total_images)
+   if (index < disk.am3u_fd->changee_used)
    {
-      if (!string_is_empty(disk.path[index]))
+      if (!string_is_empty(disk.am3u_fd->changee_tbl[index].path))
       {
-         strncpy(path, disk.path[index], len);
+         strncpy(path, disk.am3u_fd->changee_tbl[index].path, len);
          return true;
       }
    }
@@ -466,11 +465,11 @@ static bool disk_get_image_label(unsigned index, char *label, size_t len)
    if (len < 1)
       return false;
 
-   if (index < disk.total_images)
+   if (index < disk.am3u_fd->changee_used)
    {
-      if (!string_is_empty(disk.label[index]))
+      if (!string_is_empty(disk.am3u_fd->changee_tbl[index].label))
       {
-         strncpy(label, disk.label[index], len);
+         strncpy(label, disk.am3u_fd->changee_tbl[index].label, len);
          return true;
       }
    }
@@ -511,20 +510,11 @@ static void disk_swap_interface_init(void)
 {
    unsigned i;
    disk.dci_version  = 0;
-   disk.total_images = 0;
    disk.index        = 0;
    disk.cur_drive    = FDD1;
-   disk.inserted[0]  = false;
-   disk.inserted[1]  = false;
-
-   disk.g_initial_disc         = 0;
-   disk.g_initial_disc_path[0] = '\0';
-
-   for (i = 0; i < MAX_DISKS; i++)
-   {
-      disk.path[i][0]  = '\0';
-      disk.label[i][0] = '\0';
-   }
+   disk.am3u=NULL;
+   disk.am3u_fd=NULL;
+   disk.am3u_hd=NULL;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION, &disk.dci_version) && (disk.dci_version >= 1))
       attach_disk_swap_interface_ext();
@@ -626,77 +616,43 @@ static void parse_cmdline(const char *argv)
    }
 }
 
+static bool am3u_error(void* user,int code,int lineloc,const QTextRef* line){
+
+   if (!log_cb) return true;
+
+	char* msg=qtext_alloc_q(line);
+
+	  log_cb(RETRO_LOG_ERROR,
+                      "M3U error %d in line %d: %s\n",
+                      code,lineloc,msg);
+	
+	qtext_free(&msg);
+
+	return true;
+}
 
 static bool read_m3u(const char *file)
 {
-   unsigned index = 0;
-   char line[MAX_PATH];
-   char name[MAX_PATH];
-   FILE *f = fopen(file, "r");
+	QLoaded* img=qload(file,false);
+	if(!img)return false;
 
-   if (!f)
-      return false;
+	disk.am3u=am3u_new();
+	am3u_set_default_device(disk.am3u,'F');
+	disk.am3u_fd=am3u_get_device(disk.am3u,'F');
+	am3u_device_set_changer(disk.am3u_fd,MAX_DISKS);
+	am3u_device_set_slots(disk.am3u_fd,2);
+	disk.am3u_hd=am3u_get_device(disk.am3u,'H');
+	am3u_device_set_changer(disk.am3u_hd,MAX_HDDS);
+	am3u_device_set_slots(disk.am3u_hd,MAX_HDDS);
 
-   while (fgets(line, sizeof(line), f) && index < sizeof(disk.path) / sizeof(disk.path[0]))
-   {
-      if (line[0] == '#')
-         continue;
+	QTextRef imgref;
+	qtext_ref_q(&imgref,(const char*)qloaded_bgn(img),img->readsize);
+	QTextRef m3udir;
+	qpath_dirname_c(&m3udir,file);
+	am3u_setup_q(disk.am3u,&imgref,&m3udir,am3u_error,NULL);
+	qunload(&img);
 
-      char *carriage_return = strchr(line, '\r');
-      if (carriage_return)
-         *carriage_return = '\0';
-
-      char *newline = strchr(line, '\n');
-      if (newline)
-         *newline = '\0';
-
-      /* Remove any beginning and ending quotes as these can cause issues when feeding the paths into command line later */
-      if (line[0] == '"')
-          memmove(line, line + 1, strlen(line));
-
-      if (line[strlen(line) - 1] == '"')
-          line[strlen(line) - 1]  = '\0';
-
-      if (line[0] != '\0')
-      {
-         char image_label[4096];
-         char *custom_label;
-         size_t len = 0;
-
-         if (is_path_absolute(line))
-            strncpy(name, line, sizeof(name));
-         else
-            snprintf(name, sizeof(name), "%s%c%s", base_dir, SLASH, line);
-
-         custom_label = strchr(name, '|');
-         if (custom_label)
-         {
-            /* get disk path */
-            len = custom_label + 1 - name;
-            strncpy(disk.path[index], name, len - 1);
-
-            /* get custom label */
-            custom_label++;
-            strncpy(disk.label[index], custom_label, sizeof(disk.label[index]));
-         }
-         else
-         {
-            /* copy path */
-            strncpy(disk.path[index], name, sizeof(disk.path[index]));
-
-            /* extract base name from path for labels */
-            extract_basename(image_label, name, sizeof(image_label));
-            strncpy(disk.label[index], image_label, sizeof(disk.label[index]));
-         }
-
-         index++;
-      }
-   }
-
-   disk.total_images = index;
-   fclose(f);
-
-   return (disk.total_images != 0);
+	return true;
 }
 
 static void Add_Option(const char* option)
@@ -737,15 +693,15 @@ static int retro_load_game_internal(const char *argv)
             return 0;
          }
 
-         if(disk.total_images > 1)
+         if(disk.am3u_fd->changee_used > 1)
          {
-            sprintf((char*)argv, "%s \"%s\" \"%s\"", "px68k", disk.path[0], disk.path[1]);
-            disk.inserted[1] = true;
+            sprintf((char*)argv, "%s \"%s\" \"%s\"", "px68k",
+				disk.am3u_fd->changee_tbl[disk.am3u_fd->slot_tbl[0]].path,
+				disk.am3u_fd->changee_tbl[disk.am3u_fd->slot_tbl[1]].path);
          }
          else
-            sprintf((char*)argv, "%s \"%s\"", "px68k", disk.path[0]);
+            sprintf((char*)argv, "%s \"%s\"", "px68k", disk.am3u_fd->changee_tbl[disk.am3u_fd->slot_tbl[0]].path);
 
-         disk.inserted[0] = true;
          parse_cmdline(argv);
       }
    }
@@ -1548,6 +1504,10 @@ void retro_unload_game(void)
 {
    RPATH[0]    = '\0';
    firstcall   = 0;
+
+	disk.am3u_hd=NULL;
+	disk.am3u_fd=NULL;
+	if(disk.am3u)am3u_free(&disk.am3u);
 }
 
 unsigned retro_get_region(void)
