@@ -475,6 +475,16 @@ enum retro_key
    RETROK_COPY           = 332, /* for X68 */
    RETROK_HIRAGANA       = 333, /* for X68 */
    RETROK_ZENKAKU        = 334, /* for X68 */
+   RETROK_NMI            = 335, /* for X1,X68 */
+   RETROK_F16            = 336, /* for FMTowns */
+   RETROK_F17            = 337, /* for FMTowns */
+   RETROK_F18            = 338, /* for FMTowns */
+   RETROK_F19            = 339, /* for FMTowns */
+   RETROK_F20            = 340, /* for FMTowns */
+   RETROK_KP000          = 341, /* for FMTowns */
+   RETROK_DICT           = 342, /* for FMTowns */
+   RETROK_REGISTER       = 343, /* for FMTowns */
+   RETROK_REMOVE         = 344, /* for FMTowns */
 
    RETROK_KP789          = 376, /* for Joy2NumPad */
    RETROK_KP123          = 377, /* for Joy2NumPad */
