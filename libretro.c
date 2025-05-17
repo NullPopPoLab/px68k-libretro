@@ -1065,34 +1065,24 @@ run_pmain:
 
 static void retro_set_controller_descriptors(void)
 {
-   unsigned i;
-   unsigned size = 16;
+   unsigned i,wp=0;
+   unsigned size_desc = sizeof(input_descs)/sizeof(struct retro_input_descriptor);
+   unsigned size_p1 = sizeof(input_descs_p1)/sizeof(struct retro_input_descriptor);
+   unsigned size_p2 = sizeof(input_descs_p2)/sizeof(struct retro_input_descriptor);
 
-   for (i = 0; i < (2 * size); i++)
-      input_descs[i] = input_descs_null[0];
+	if (log_cb)
+		log_cb(RETRO_LOG_INFO, "size_desc=%u size_p1=%u size_p2=%u\n", size_desc,size_p1,size_p2);
 
-   if (joypad1 && joypad2)
-   {
-      for (i = 0; i < (2 * size); i++)
-      {
-         if (i < size)
-            input_descs[i] = input_descs_p1[i];
-         else
-            input_descs[i] = input_descs_p2[i - size];
-      }
-   }
-   else if (joypad1 || joypad2)
-   {
-      for (i = 0; i < size; i++)
-      {
-         if (joypad1)
-            input_descs[i] = input_descs_p1[i];
-         else
-            input_descs[i] = input_descs_p2[i];
-      }
-   }
-   else
-      input_descs[0] = input_descs_null[0];
+	for(i=0;i<size_p1 && wp<size_desc;++i){
+		input_descs[wp++] = input_descs_p1[i];
+	}
+	for(i=0;i<size_p2 && wp<size_desc;++i){
+		input_descs[wp++] = input_descs_p2[i];
+	}
+	for(;wp<size_desc;++wp){
+		input_descs[wp++] = input_descs_null[0];
+	}
+
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, &input_descs);
 }
 
