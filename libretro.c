@@ -106,8 +106,6 @@ char base_dir[MAX_PATH];
 static uint8_t Core_Key_State[RETROK_LAST];
 static uint8_t Core_old_Key_State[RETROK_LAST];
 
-static bool joypad1, joypad2;
-
 static bool opt_analog;
 
 static char CMDFILE[512];
@@ -186,6 +184,10 @@ struct disk_control_interface_t
 
 static struct disk_control_interface_t disk;
 static struct retro_disk_control_ext2_callback dskcb;
+
+#define RETRO_DEVICE_JOYPAD_2BTN     RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 0 )
+#define RETRO_DEVICE_JOYPAD_CPSF_MD  RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 1 )
+#define RETRO_DEVICE_JOYPAD_CPSF_SFC RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 2 )
 
 static struct retro_input_descriptor input_descs[64];
 
@@ -1074,29 +1076,25 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 
    switch (device)
    {
-      case RETRO_DEVICE_JOYPAD:
-         if (port == 0)
-            joypad1 = true;
-         if (port == 1)
-            joypad2 = true;
+      case RETRO_DEVICE_JOYPAD_2BTN:
+            Config.JOY_TYPE[port] = 0;
+         break;
+      case RETRO_DEVICE_JOYPAD_CPSF_MD:
+            Config.JOY_TYPE[port] = 1;
+         break;
+      case RETRO_DEVICE_JOYPAD_CPSF_SFC:
+            Config.JOY_TYPE[port] = 2;
          break;
       case RETRO_DEVICE_KEYBOARD:
-         if (port == 0)
-            joypad1 = false;
-         if (port == 1)
-            joypad2 = false;
+            Config.JOY_TYPE[port] = -1;
          break;
       case RETRO_DEVICE_NONE:
-         if (port == 0)
-            joypad1 = false;
-         if (port == 1)
-            joypad2 = false;
+            Config.JOY_TYPE[port] = -1;
          break;
       default:
          if (log_cb)
             log_cb(RETRO_LOG_ERROR, "[libretro]: Invalid device, setting type to RETRO_DEVICE_JOYPAD ...\n");
    }
-   log_cb(RETRO_LOG_INFO, "Set Controller Device: %d, Port: %d %d %d\n", device, port, joypad1, joypad2);
    retro_set_controller_descriptors();
 }
 
@@ -1105,14 +1103,16 @@ void retro_set_environment(retro_environment_t cb)
    int nocontent = 1;
 
    static const struct retro_controller_description port[] = {
-      { "RetroPad",              RETRO_DEVICE_JOYPAD },
-      { "RetroKeyboard",         RETRO_DEVICE_KEYBOARD },
+      { "RetroPad",           RETRO_DEVICE_JOYPAD },
+      { "CPS Fighter (MD)",   RETRO_DEVICE_JOYPAD_CPSF_MD },
+      { "CPS Fighter (SFC)",  RETRO_DEVICE_JOYPAD_CPSF_SFC },
+      { "RetroKeyboard",      RETRO_DEVICE_KEYBOARD },
       { 0 },
    };
 
    static const struct retro_controller_info ports[] = {
-      { port, 2 },
-      { port, 2 },
+      { port, sizeof(port)/sizeof(struct retro_controller_description) },
+      { port, sizeof(port)/sizeof(struct retro_controller_description) },
       { NULL, 0 },
    };
 
