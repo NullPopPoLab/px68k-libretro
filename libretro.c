@@ -175,7 +175,6 @@ struct disk_control_interface_t
 {
    unsigned dci_version;                        /* disk control interface version, 0 = use old interface */
    unsigned index;                              /* currect disk index */
-   disk_drive cur_drive;                        /* current active drive */
 
    unsigned g_initial_disc;                     /* initial disk index */
    char g_initial_disc_path[MAX_PATH];          /* initial disk path */
@@ -186,8 +185,7 @@ struct disk_control_interface_t
 };
 
 static struct disk_control_interface_t disk;
-static struct retro_disk_control_callback dskcb;
-static struct retro_disk_control_ext_callback dskcb_ext;
+static struct retro_disk_control_ext2_callback dskcb;
 
 static struct retro_input_descriptor input_descs[64];
 
@@ -364,48 +362,30 @@ static void midi_interface_init(void)
 
 /* END OF MIDI INTERFACE */
 
-static void update_variable_disk_drive_swap(void)
-{
-   struct retro_variable var =
-   {
-      "px68k_disk_drive",
-      NULL
-   };
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "FDD0") == 0)
-         disk.cur_drive = FDD0;
-      else
-         disk.cur_drive = FDD1;
-   }
-}
-
-static bool set_eject_state(bool ejected)
+static bool set_drive_eject_state(unsigned drive, bool ejected)
 {
    if (disk.index == disk.am3u_fd->changee_used)
       return true; /* Frontend is trying to set "no disk in tray" */
 
    if (ejected)
    {
-      FDD_EjectFD(disk.cur_drive);
-      Config.FDDImage[disk.cur_drive][0] = '\0';
-		disk.am3u_fd->slot_tbl[disk.cur_drive]=-1;
+      FDD_EjectFD(drive);
+      Config.FDDImage[drive][0] = '\0';
+		disk.am3u_fd->slot_tbl[drive]=-1;
    }
    else
    {
-      strncpy(Config.FDDImage[disk.cur_drive], disk.am3u_fd->changee_tbl[disk.index].path, MAX_PATH-1);
-      Config.FDDImage[disk.cur_drive][MAX_PATH-1]=0;
-      FDD_SetFD(disk.cur_drive, Config.FDDImage[disk.cur_drive], 0);
-		disk.am3u_fd->slot_tbl[disk.cur_drive]=disk.index;
+      strncpy(Config.FDDImage[drive], disk.am3u_fd->changee_tbl[disk.index].path, MAX_PATH-1);
+      Config.FDDImage[drive][MAX_PATH-1]=0;
+      FDD_SetFD(drive, Config.FDDImage[drive], 0);
+		disk.am3u_fd->slot_tbl[drive]=disk.index;
    }
    return true;
 }
 
-static bool get_eject_state(void)
+static bool get_drive_eject_state(unsigned drive)
 {
-   update_variable_disk_drive_swap();
-	return !am3u_device_get_media(disk.am3u_fd,disk.cur_drive);
+	return !am3u_device_get_media(disk.am3u_fd,drive);
 }
 
 static unsigned get_image_index(void)
@@ -417,6 +397,11 @@ static bool set_image_index(unsigned index)
 {
    disk.index = index;
    return true;
+}
+
+static unsigned get_num_drives(void)
+{
+   return 2;
 }
 
 static unsigned get_num_images(void)
@@ -480,33 +465,30 @@ static bool disk_get_image_label(unsigned index, char *label, size_t len)
    return false;
 }
 
+static int disk_get_drive_image_index(unsigned drive)
+{
+	if(drive>=get_num_drives())return -1;
+	if(get_drive_eject_state(drive))return -1;
+	return disk.am3u_fd->slot_tbl[drive];
+}
+
 static void attach_disk_swap_interface(void)
 {
-   dskcb.set_eject_state = set_eject_state;
-   dskcb.get_eject_state = get_eject_state;
+   memset(&dskcb,0,sizeof(dskcb));
+   dskcb.set_drive_eject_state = set_drive_eject_state;
+   dskcb.get_drive_eject_state = get_drive_eject_state;
    dskcb.set_image_index = set_image_index;
    dskcb.get_image_index = get_image_index;
+   dskcb.get_num_drives  = get_num_drives;
    dskcb.get_num_images  = get_num_images;
    dskcb.add_image_index = add_image_index;
    dskcb.replace_image_index = replace_image_index;
+   dskcb.set_initial_image = NULL;
+   dskcb.get_image_path = disk_get_image_path;
+   dskcb.get_image_label = disk_get_image_label;
+   dskcb.get_drive_image_index = disk_get_drive_image_index;
 
-   environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE, &dskcb);
-}
-
-void attach_disk_swap_interface_ext(void)
-{
-   dskcb_ext.set_eject_state = set_eject_state;
-   dskcb_ext.get_eject_state = get_eject_state;
-   dskcb_ext.set_image_index = set_image_index;
-   dskcb_ext.get_image_index = get_image_index;
-   dskcb_ext.get_num_images  = get_num_images;
-   dskcb_ext.add_image_index = add_image_index;
-   dskcb_ext.replace_image_index = replace_image_index;
-   dskcb_ext.set_initial_image = NULL;
-   dskcb_ext.get_image_path = disk_get_image_path;
-   dskcb_ext.get_image_label = disk_get_image_label;
-
-   environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE, &dskcb_ext);
+   environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT2_INTERFACE, &dskcb);
 }
 
 static void disk_swap_interface_init(void)
@@ -514,15 +496,11 @@ static void disk_swap_interface_init(void)
    unsigned i;
    disk.dci_version  = 0;
    disk.index        = 0;
-   disk.cur_drive    = FDD1;
    disk.am3u=NULL;
    disk.am3u_fd=NULL;
    disk.am3u_hd=NULL;
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION, &disk.dci_version) && (disk.dci_version >= 1))
-      attach_disk_swap_interface_ext();
-   else
-      attach_disk_swap_interface();
+   attach_disk_swap_interface();
 }
 /* end .dsk swap support */
 
@@ -1270,8 +1248,6 @@ static void update_variables(int running)
       }
    }
 #endif
-
-   update_variable_disk_drive_swap();
 
    var.key    = "px68k_menufontsize";
    var.value  = NULL;

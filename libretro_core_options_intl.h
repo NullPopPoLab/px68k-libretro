@@ -222,17 +222,6 @@ struct retro_core_option_definition option_def_fr[] = {
    },
 #endif
    {
-      "px68k_disk_drive",
-      "Échange de disques sur le lecteur",
-      "Par défaut, l'interface native de RetroArch, d'échange de disque dans le menu, échange le disque dans le lecteur FDD1. Modifiez cette option pour échanger des disques dans le lecteur FDD0.",
-      {
-         { "FDD1", NULL },
-         { "FDD0", NULL },
-         { NULL,   NULL },
-      },
-      "FDD1"
-   },
-   {
       "px68k_save_fdd_path",
       "Enregistrer les chemins d'accès aux disques",
       "Lorsqu'elle est activée, les chemins d'accès aux disques précédemment chargés seront enregistrés pour chaque lecteur, puis chargés automatiquement au démarrage. Lorsqu'elle est désactivé, FDD et HDD commencent à vide.",
