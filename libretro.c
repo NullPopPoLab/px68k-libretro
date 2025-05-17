@@ -103,8 +103,8 @@ const char *retro_content_directory;
 char retro_system_conf[512];
 char base_dir[MAX_PATH];
 
-static uint8_t Core_Key_State[512];
-static uint8_t Core_old_Key_State[512];
+static uint8_t Core_Key_State[RETROK_LAST];
+static uint8_t Core_old_Key_State[RETROK_LAST];
 
 static bool joypad1, joypad2;
 
@@ -1616,7 +1616,7 @@ void retro_init(void)
 
    update_variables(0);
 
-   memset(Core_Key_State, 0, 512);
+   memset(Core_Key_State, 0, sizeof(Core_Key_State));
    memset(Core_old_Key_State, 0, sizeof(Core_old_Key_State));
 
    FRAMERATE = framerates[Config.AdjustFrameRates][VID_MODE];
@@ -2129,7 +2129,7 @@ void retro_run(void)
       Mouse_Event(2,0,0);
    }
 
-   for(i = 0; i < 320; i++)
+   for(i = 0; i < RETROK_LAST; i++)
       Core_Key_State[i] = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, i) ? 0x80: 0;
 
    Core_Key_State[RETROK_XFX] = 0;
