@@ -71,10 +71,10 @@ static void LoadDefaults(void)
 	Config.AdjustFrameRates = 1;
 	Config.AudioDesyncHack = 0;
 
-	for (i = 0; i < 2; i++)
+	for (i = 0; i < MAX_FDIMAGE; i++)
 		Config.FDDImage[i][0] = '\0';
 
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < MAX_HDIMAGE; i++)
 		Config.HDImage[i][0] = '\0';
 
 	initialized = 1;
@@ -98,14 +98,14 @@ void LoadConfig(void)
 		filepath[0] = 0;
 
 	if (Config.save_fdd_path)
-		for (i = 0; i < 2; i++)
+		for (i = 0; i < MAX_FDIMAGE; i++)
 		{
 			sprintf(buf, "FDD%d", i);
 			GetPrivateProfileString("WinX68k", buf, "", Config.FDDImage[i], MAX_PATH, winx68k_ini);
 		}
 
 	if (Config.save_hdd_path)
-		for (i=0; i<16; i++)
+		for (i=0; i<MAX_HDIMAGE; i++)
 		{
 			sprintf(buf, "HDD%d", i);
 			GetPrivateProfileString("WinX68k", buf, "", Config.HDImage[i], MAX_PATH, winx68k_ini);
@@ -121,14 +121,14 @@ void SaveConfig(void)
 	WritePrivateProfileString("WinX68k", "StartDir", filepath, winx68k_ini);
 
 	if (Config.save_fdd_path)
-		for (i = 0; i < 2; i++)
+		for (i = 0; i < MAX_FDIMAGE; i++)
 		{
 			sprintf(buf, "FDD%d", i);
 			WritePrivateProfileString("WinX68k", buf, Config.FDDImage[i], winx68k_ini);
 		}
 
 	if (Config.save_hdd_path)
-		for (i=0; i<16; i++)
+		for (i=0; i<MAX_HDIMAGE; i++)
 		{
 			sprintf(buf, "HDD%d", i);
 			WritePrivateProfileString("WinX68k", buf, Config.HDImage[i], winx68k_ini);
