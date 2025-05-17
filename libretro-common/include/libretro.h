@@ -510,8 +510,9 @@ enum retro_key
    RETROK_F20            = 340, /* for FMTowns */
    RETROK_KP000          = 341, /* for FMTowns */
    RETROK_DICT           = 342, /* for FMTowns */
-   RETROK_REGISTER       = 343, /* for FMTowns */
+   RETROK_REGISTER       = 343, /* for X68,FMTowns */
    RETROK_REMOVE         = 344, /* for FMTowns */
+   RETROK_SYMBOL         = 345, /* for X68 */
 
    RETROK_KP789          = 376, /* for Joy2NumPad */
    RETROK_KP123          = 377, /* for Joy2NumPad */
