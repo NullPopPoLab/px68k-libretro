@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include "common.h"
 
+#define MAX_FDIMAGE 4
+#define MAX_HDIMAGE 16
+
 typedef struct
 {
 	uint32_t BufferSize;
@@ -14,7 +17,7 @@ typedef struct
 	int MIDI_SW;
 	int MIDI_Type;
 	int MIDI_Reset;
-	char HDImage[16][MAX_PATH];
+	char HDImage[MAX_HDIMAGE][MAX_PATH];
 	int ToneMap;
 	char ToneMapFile[MAX_PATH];
 	int XVIMode;
@@ -22,7 +25,7 @@ typedef struct
 	int SoundROMEO;
 	int MIDIDelay;
 	int MIDIAutoDelay;
-	char FDDImage[2][MAX_PATH];
+	char FDDImage[MAX_FDIMAGE][MAX_PATH];
 	int VbtnSwap;
 	int JoyOrMouse;
 	int NoWaitMode;
