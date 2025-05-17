@@ -210,7 +210,6 @@ static struct retro_input_descriptor input_descs_p1[] = {
    { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2, "L2" },
    { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3, "R3" },
    { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3, "L3" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_G7, "Jpypad keymap change" },
    { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_G8, "Menu" },
 };
 static struct retro_input_descriptor input_descs_p2[] = {
@@ -1130,23 +1129,6 @@ static void update_variables(int running)
 
    if (!running)
       update_variable_midi_interface();
-
-   strcpy(key, "px68k_joytype");
-   var.key = key;
-   for (i = 0; i < 2; i++)
-   {
-      key[strlen("px68k_joytype")] = '1' + i;
-      var.value = NULL;
-      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-      {
-         if (!(strcmp(var.value, "Default (2 Buttons)")))
-            Config.JOY_TYPE[i] = 0;
-         else if (!(strcmp(var.value, "CPSF-MD (8 Buttons)")))
-            Config.JOY_TYPE[i] = 1;
-         else if (!(strcmp(var.value, "CPSF-SFC (8 Buttons)")))
-            Config.JOY_TYPE[i] = 2;
-      }
-   }
 
    var.key = "px68k_cpuspeed";
    var.value = NULL;
@@ -2117,14 +2099,6 @@ void retro_run(void)
    /* Joypad Key for Menu */
    if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_G8))	
       Core_Key_State[RETROK_PC] = 0x80;
-
-   if (Config.joy1_select_mapping)
-   {
-      /* Joypad Key for Mapping */
-      if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0,
-               RETRO_DEVICE_ID_JOYPAD_G7))	
-         Core_Key_State[RETROK_XFX] = 0x80;
-   }
 
    if(memcmp( Core_Key_State,Core_old_Key_State , sizeof(Core_Key_State) ) )
       handle_retrok();
