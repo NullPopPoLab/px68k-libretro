@@ -2147,6 +2147,28 @@ void retro_run(void)
    for(i = 0; i < 320; i++)
       Core_Key_State[i] = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, i) ? 0x80: 0;
 
+   // joypad to 8 direction tenkey 
+   if(Core_Key_State[RETROK_KP789]){
+       if(Core_Key_State[RETROK_KP369] && !Core_Key_State[RETROK_KP147])Core_Key_State[RETROK_KP9]=0x80;
+       else if(Core_Key_State[RETROK_KP147] && !Core_Key_State[RETROK_KP369])Core_Key_State[RETROK_KP7]=0x80;
+       else Core_Key_State[RETROK_KP8]=0x80;
+   }
+   if(Core_Key_State[RETROK_KP123]){
+       if(Core_Key_State[RETROK_KP369] && !Core_Key_State[RETROK_KP147])Core_Key_State[RETROK_KP3]=0x80;
+       else if(Core_Key_State[RETROK_KP147] && !Core_Key_State[RETROK_KP369])Core_Key_State[RETROK_KP1]=0x80;
+       else Core_Key_State[RETROK_KP2]=0x80;
+   }
+   if(Core_Key_State[RETROK_KP147]){
+       if(Core_Key_State[RETROK_KP789] && !Core_Key_State[RETROK_KP123])Core_Key_State[RETROK_KP7]=0x80;
+       else if(Core_Key_State[RETROK_KP123] && !Core_Key_State[RETROK_KP789])Core_Key_State[RETROK_KP1]=0x80;
+       else Core_Key_State[RETROK_KP4]=0x80;
+   }
+   if(Core_Key_State[RETROK_KP369]){
+       if(Core_Key_State[RETROK_KP789] && !Core_Key_State[RETROK_KP123])Core_Key_State[RETROK_KP9]=0x80;
+       else if(Core_Key_State[RETROK_KP123] && !Core_Key_State[RETROK_KP789])Core_Key_State[RETROK_KP3]=0x80;
+       else Core_Key_State[RETROK_KP6]=0x80;
+   }
+
    Core_Key_State[RETROK_XFX] = 0;
 
    /* Joypad Key for Menu */
