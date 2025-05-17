@@ -175,7 +175,6 @@ struct disk_control_interface_t
 {
    unsigned dci_version;                        /* disk control interface version, 0 = use old interface */
    unsigned index;                              /* currect disk index */
-   disk_drive cur_drive;                        /* current active drive */
 
    unsigned g_initial_disc;                     /* initial disk index */
    char g_initial_disc_path[MAX_PATH];          /* initial disk path */
@@ -363,23 +362,6 @@ static void midi_interface_init(void)
 
 /* END OF MIDI INTERFACE */
 
-static void update_variable_disk_drive_swap(void)
-{
-   struct retro_variable var =
-   {
-      "px68k_disk_drive",
-      NULL
-   };
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "FDD0") == 0)
-         disk.cur_drive = FDD0;
-      else
-         disk.cur_drive = FDD1;
-   }
-}
-
 static bool set_drive_eject_state(unsigned drive, bool ejected)
 {
    if (disk.index == disk.am3u_fd->changee_used)
@@ -403,7 +385,6 @@ static bool set_drive_eject_state(unsigned drive, bool ejected)
 
 static bool get_drive_eject_state(unsigned drive)
 {
-   update_variable_disk_drive_swap();
 	return !am3u_device_get_media(disk.am3u_fd,drive);
 }
 
@@ -515,7 +496,6 @@ static void disk_swap_interface_init(void)
    unsigned i;
    disk.dci_version  = 0;
    disk.index        = 0;
-   disk.cur_drive    = FDD1;
    disk.am3u=NULL;
    disk.am3u_fd=NULL;
    disk.am3u_hd=NULL;
@@ -1268,8 +1248,6 @@ static void update_variables(int running)
       }
    }
 #endif
-
-   update_variable_disk_drive_swap();
 
    var.key    = "px68k_menufontsize";
    var.value  = NULL;

@@ -233,17 +233,6 @@ struct retro_core_option_definition option_defs_us[] = {
    },
 #endif
    {
-      "px68k_disk_drive",
-      "Swap Disks on Drive",
-      "By default using the native Disk Swap interface within RetroArch's menu will swap the disk in drive FDD1. Change this option to swap disks in drive FDD0.",
-      {
-         { "FDD1", NULL },
-         { "FDD0", NULL },
-         { NULL,   NULL },
-      },
-      "FDD1"
-   },
-   {
       "px68k_save_fdd_path",
       "Save FDD Paths",
       "When enabled, last loaded fdd path will be saved for each drive and then auto-loaded on startup. When disabled, FDDx starts empty.",
