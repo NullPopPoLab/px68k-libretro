@@ -128,7 +128,7 @@ void FASTCALL Joystick_Update(int is_menu, int key, int port)
          if (res & (1 << RETRO_DEVICE_ID_JOYPAD_START))
             ret0 &= ~(JOY_UP | JOY_DOWN);
          if (!Config.joy1_select_mapping)
-            if (res & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
+            if (res & (1 << RETRO_DEVICE_ID_JOYPAD_G7))
                ret0 &= ~(JOY_LEFT | JOY_RIGHT);
          break;
 
@@ -148,7 +148,7 @@ void FASTCALL Joystick_Update(int is_menu, int key, int port)
          if (res & (1 << RETRO_DEVICE_ID_JOYPAD_START))
             ret1 ^= JOY_TRG6; /* Start */
          if (!Config.joy1_select_mapping)
-            if (res & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
+            if (res & (1 << RETRO_DEVICE_ID_JOYPAD_G7))
                ret1 ^= JOY_TRG7;	/* Mode */
          break;
 
@@ -168,7 +168,7 @@ void FASTCALL Joystick_Update(int is_menu, int key, int port)
          if (res & (1 << RETRO_DEVICE_ID_JOYPAD_START))
             ret1 ^= JOY_TRG6;
          if (!Config.joy1_select_mapping)
-            if (res & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
+            if (res & (1 << RETRO_DEVICE_ID_JOYPAD_G7))
                ret1 ^= JOY_TRG7;
          break;
    }
