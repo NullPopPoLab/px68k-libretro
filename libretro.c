@@ -106,8 +106,6 @@ char base_dir[MAX_PATH];
 static uint8_t Core_Key_State[RETROK_LAST];
 static uint8_t Core_old_Key_State[RETROK_LAST];
 
-static bool joypad1, joypad2;
-
 static bool opt_analog;
 
 static char CMDFILE[512];
@@ -187,6 +185,10 @@ struct disk_control_interface_t
 static struct disk_control_interface_t disk;
 static struct retro_disk_control_ext2_callback dskcb;
 
+#define RETRO_DEVICE_JOYPAD_2BTN     RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 0 )
+#define RETRO_DEVICE_JOYPAD_CPSF_MD  RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 1 )
+#define RETRO_DEVICE_JOYPAD_CPSF_SFC RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 2 )
+
 static struct retro_input_descriptor input_descs[64];
 
 static struct retro_input_descriptor input_descs_p1[] = {
@@ -208,7 +210,6 @@ static struct retro_input_descriptor input_descs_p1[] = {
    { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2, "L2" },
    { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3, "R3" },
    { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3, "L3" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_G7, "Jpypad keymap change" },
    { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_G8, "Menu" },
 };
 static struct retro_input_descriptor input_descs_p2[] = {
@@ -1074,29 +1075,25 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 
    switch (device)
    {
-      case RETRO_DEVICE_JOYPAD:
-         if (port == 0)
-            joypad1 = true;
-         if (port == 1)
-            joypad2 = true;
+      case RETRO_DEVICE_JOYPAD_2BTN:
+            Config.JOY_TYPE[port] = 0;
+         break;
+      case RETRO_DEVICE_JOYPAD_CPSF_MD:
+            Config.JOY_TYPE[port] = 1;
+         break;
+      case RETRO_DEVICE_JOYPAD_CPSF_SFC:
+            Config.JOY_TYPE[port] = 2;
          break;
       case RETRO_DEVICE_KEYBOARD:
-         if (port == 0)
-            joypad1 = false;
-         if (port == 1)
-            joypad2 = false;
+            Config.JOY_TYPE[port] = -1;
          break;
       case RETRO_DEVICE_NONE:
-         if (port == 0)
-            joypad1 = false;
-         if (port == 1)
-            joypad2 = false;
+            Config.JOY_TYPE[port] = -1;
          break;
       default:
          if (log_cb)
             log_cb(RETRO_LOG_ERROR, "[libretro]: Invalid device, setting type to RETRO_DEVICE_JOYPAD ...\n");
    }
-   log_cb(RETRO_LOG_INFO, "Set Controller Device: %d, Port: %d %d %d\n", device, port, joypad1, joypad2);
    retro_set_controller_descriptors();
 }
 
@@ -1105,14 +1102,16 @@ void retro_set_environment(retro_environment_t cb)
    int nocontent = 1;
 
    static const struct retro_controller_description port[] = {
-      { "RetroPad",              RETRO_DEVICE_JOYPAD },
-      { "RetroKeyboard",         RETRO_DEVICE_KEYBOARD },
+      { "RetroPad",           RETRO_DEVICE_JOYPAD },
+      { "CPS Fighter (MD)",   RETRO_DEVICE_JOYPAD_CPSF_MD },
+      { "CPS Fighter (SFC)",  RETRO_DEVICE_JOYPAD_CPSF_SFC },
+      { "RetroKeyboard",      RETRO_DEVICE_KEYBOARD },
       { 0 },
    };
 
    static const struct retro_controller_info ports[] = {
-      { port, 2 },
-      { port, 2 },
+      { port, sizeof(port)/sizeof(struct retro_controller_description) },
+      { port, sizeof(port)/sizeof(struct retro_controller_description) },
       { NULL, 0 },
    };
 
@@ -1130,23 +1129,6 @@ static void update_variables(int running)
 
    if (!running)
       update_variable_midi_interface();
-
-   strcpy(key, "px68k_joytype");
-   var.key = key;
-   for (i = 0; i < 2; i++)
-   {
-      key[strlen("px68k_joytype")] = '1' + i;
-      var.value = NULL;
-      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-      {
-         if (!(strcmp(var.value, "Default (2 Buttons)")))
-            Config.JOY_TYPE[i] = 0;
-         else if (!(strcmp(var.value, "CPSF-MD (8 Buttons)")))
-            Config.JOY_TYPE[i] = 1;
-         else if (!(strcmp(var.value, "CPSF-SFC (8 Buttons)")))
-            Config.JOY_TYPE[i] = 2;
-      }
-   }
 
    var.key = "px68k_cpuspeed";
    var.value = NULL;
@@ -2117,14 +2099,6 @@ void retro_run(void)
    /* Joypad Key for Menu */
    if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_G8))	
       Core_Key_State[RETROK_PC] = 0x80;
-
-   if (Config.joy1_select_mapping)
-   {
-      /* Joypad Key for Mapping */
-      if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0,
-               RETRO_DEVICE_ID_JOYPAD_G7))	
-         Core_Key_State[RETROK_XFX] = 0x80;
-   }
 
    if(memcmp( Core_Key_State,Core_old_Key_State , sizeof(Core_Key_State) ) )
       handle_retrok();
