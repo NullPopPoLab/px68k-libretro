@@ -1726,7 +1726,7 @@ static void handle_retrok(void)
       KEYP(RETROK_0 + i, 0x1 + i);
    KEYP(RETROK_0,0xb);
    KEYP(RETROK_MINUS,0xc);
-   KEYP(RETROK_QUOTE,0x28); /* colon : */
+   KEYP(RETROK_COLON,0x28); /* colon : */
    KEYP(RETROK_BACKSPACE,0xf);
 
    KEYP(RETROK_TAB,0x10);
@@ -1743,7 +1743,7 @@ static void handle_retrok(void)
    KEYP(RETROK_BACKQUOTE,0x1B);
    KEYP(RETROK_LEFTBRACKET,0x1C);
    KEYP(RETROK_RETURN,0x1d);
-   KEYP(RETROK_EQUALS,0xd); /* caret ^ */
+   KEYP(RETROK_CARET,0xd); /* caret ^ */
 
    KEYP(RETROK_a,0x1e);
    KEYP(RETROK_s,0x1f);
@@ -1768,7 +1768,7 @@ static void handle_retrok(void)
    KEYP(RETROK_COMMA,0x31);
    KEYP(RETROK_PERIOD,0x32);
    KEYP(RETROK_SLASH,0x33);
-   KEYP(RETROK_0,0x34); /* underquote _ as shift+0 which was empty, Japanese
+   KEYP(RETROK_UNDERSCORE,0x34); /* underquote _ as shift+0 which was empty, Japanese
                            chars can't overlap as we're not using them */
 
    KEYP(RETROK_SPACE,0x35);
@@ -1799,24 +1799,28 @@ static void handle_retrok(void)
    KEYP(RETROK_KP3,0x4d);
    KEYP(RETROK_KP_ENTER,0x4e);
    KEYP(RETROK_KP0,0x4f);
-#if 0
-   KEYP(RETROK_COMMA,0x50);
-#endif
+   KEYP(RETROK_KP_COMMA,0x50);
    KEYP(RETROK_KP_PERIOD,0x51);
 
-   KEYP(RETROK_PRINT,0x52); /* symbol input (kigou) */
-   KEYP(RETROK_SCROLLOCK,0x53); /* registration (touroku) */
-   KEYP(RETROK_F11,0x54); /* help */
-
-   /* only process kb_to_joypad map when its not zero, else button is used as
-    * joypad select mode */
-   if (Config.joy1_select_mapping)
-      KEYP(RETROK_XFX, Config.joy1_select_mapping);
+   KEYP(RETROK_SYMBOL,0x52); /* symbol input (kigou) */
+   KEYP(RETROK_REGISTER,0x53); /* registration (touroku) */
+   KEYP(RETROK_HELP,0x54); /* help */
+   KEYP(RETROK_F11,0x55); //xf1
+   KEYP(RETROK_F12,0x56); //xf2
+   KEYP(RETROK_F13,0x57); //xf3
+   KEYP(RETROK_F14,0x58); //xf4
+   KEYP(RETROK_F15,0x59); //xf5
+   KEYP(RETROK_KANA,0x5a); //kana
+   KEYP(RETROK_ROMAN,0x5b); //romaji
+   KEYP(RETROK_CODE,0x5c); //input by codes
 
    KEYP(RETROK_CAPSLOCK,0x5d);
    KEYP(RETROK_INSERT,0x5e);
+   KEYP(RETROK_HIRAGANA,0x5f); //hiragana 
+   KEYP(RETROK_ZENKAKU,0x60); //zenkaku
    KEYP(RETROK_BREAK,0x61); /* break */
    KEYP(RETROK_PAUSE,0x61); /* break (allow shift+break combo) */
+   KEYP(RETROK_COPY,0x62); //copy
 
    for(i = 0; i < 10; i++)
       KEYP(RETROK_F1 + i, 0x63 + i);
@@ -1825,10 +1829,10 @@ static void handle_retrok(void)
    KEYP(RETROK_RSHIFT,0x70);
    KEYP(RETROK_LCTRL,0x71);
    KEYP(RETROK_RCTRL,0x71);
-   KEYP(RETROK_LSUPER,0x72);
-   KEYP(RETROK_RSUPER,0x73);
-   KEYP(RETROK_LALT,0x72);
-   KEYP(RETROK_RALT,0x73);
+//   KEYP(RETROK_LSUPER,0x72);
+//   KEYP(RETROK_RSUPER,0x73);
+   KEYP(RETROK_LALT,0x72); // Opt.1
+   KEYP(RETROK_RALT,0x73); // Opt.2
 }
 
 #define CLOCK_SLICE 200
