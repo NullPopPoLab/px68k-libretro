@@ -70,11 +70,11 @@ static uint32_t get_px68k_input_bitmasks(int port)
    return input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
 }
 
-static uint16_t get_px68k_input(int port)
+static uint32_t get_px68k_input(int port)
 {
    uint32_t i   = 0;
    uint32_t res = 0;
-   for (i = 0; i < (RETRO_DEVICE_ID_JOYPAD_R + 1); i++)
+   for (i = 0; i < RETRO_DEVICE_ID_JOYPAD_BUTTON_MAX; i++)
       res |= input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, i) ? (1 << i) : 0;
    return res;
 }
