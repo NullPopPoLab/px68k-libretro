@@ -70,11 +70,11 @@ static uint32_t get_px68k_input_bitmasks(int port)
    return input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
 }
 
-static uint16_t get_px68k_input(int port)
+static uint32_t get_px68k_input(int port)
 {
    uint32_t i   = 0;
    uint32_t res = 0;
-   for (i = 0; i < (RETRO_DEVICE_ID_JOYPAD_R + 1); i++)
+   for (i = 0; i < RETRO_DEVICE_ID_JOYPAD_BUTTON_MAX; i++)
       res |= input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, i) ? (1 << i) : 0;
    return res;
 }
@@ -128,7 +128,7 @@ void FASTCALL Joystick_Update(int is_menu, int key, int port)
          if (res & (1 << RETRO_DEVICE_ID_JOYPAD_START))
             ret0 &= ~(JOY_UP | JOY_DOWN);
          if (!Config.joy1_select_mapping)
-            if (res & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
+            if (res & (1 << RETRO_DEVICE_ID_JOYPAD_G7))
                ret0 &= ~(JOY_LEFT | JOY_RIGHT);
          break;
 
@@ -148,7 +148,7 @@ void FASTCALL Joystick_Update(int is_menu, int key, int port)
          if (res & (1 << RETRO_DEVICE_ID_JOYPAD_START))
             ret1 ^= JOY_TRG6; /* Start */
          if (!Config.joy1_select_mapping)
-            if (res & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
+            if (res & (1 << RETRO_DEVICE_ID_JOYPAD_G7))
                ret1 ^= JOY_TRG7;	/* Mode */
          break;
 
@@ -168,7 +168,7 @@ void FASTCALL Joystick_Update(int is_menu, int key, int port)
          if (res & (1 << RETRO_DEVICE_ID_JOYPAD_START))
             ret1 ^= JOY_TRG6;
          if (!Config.joy1_select_mapping)
-            if (res & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
+            if (res & (1 << RETRO_DEVICE_ID_JOYPAD_G7))
                ret1 ^= JOY_TRG7;
          break;
    }
