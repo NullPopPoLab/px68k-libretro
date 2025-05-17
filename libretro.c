@@ -392,7 +392,8 @@ static bool set_eject_state(bool ejected)
    }
    else
    {
-      strncpy(Config.FDDImage[disk.cur_drive], disk.am3u_fd->changee_tbl[disk.index].path, MAX_PATH);
+      strncpy(Config.FDDImage[disk.cur_drive], disk.am3u_fd->changee_tbl[disk.index].path, MAX_PATH-1);
+      Config.FDDImage[disk.cur_drive][MAX_PATH-1]=0;
       FDD_SetFD(disk.cur_drive, Config.FDDImage[disk.cur_drive], 0);
 		disk.am3u_fd->slot_tbl[disk.cur_drive]=disk.index;
    }
@@ -631,11 +632,8 @@ static bool am3u_error(void* user,int code,int lineloc,const QTextRef* line){
 	return true;
 }
 
-static bool read_m3u(const char *file)
+static void init_m3u()
 {
-	QLoaded* img=qload(file,false);
-	if(!img)return false;
-
 	disk.am3u=am3u_new();
 	am3u_set_default_device(disk.am3u,'F');
 	disk.am3u_fd=am3u_get_device(disk.am3u,'F');
@@ -644,6 +642,14 @@ static bool read_m3u(const char *file)
 	disk.am3u_hd=am3u_get_device(disk.am3u,'H');
 	am3u_device_set_changer(disk.am3u_hd,MAX_HDDS);
 	am3u_device_set_slots(disk.am3u_hd,MAX_HDDS);
+}
+
+static bool read_m3u(const char *file)
+{
+	QLoaded* img=qload(file,false);
+	if(!img)return false;
+
+	init_m3u();
 
 	QTextRef imgref;
 	qtext_ref_q(&imgref,(const char*)qloaded_bgn(img),img->readsize);
@@ -692,17 +698,6 @@ static int retro_load_game_internal(const char *argv)
                log_cb(RETRO_LOG_ERROR, "%s\n", "[libretro]: failed to read m3u file ...");
             return 0;
          }
-
-         if(disk.am3u_fd->changee_used > 1)
-         {
-            sprintf((char*)argv, "%s \"%s\" \"%s\"", "px68k",
-				disk.am3u_fd->changee_tbl[disk.am3u_fd->slot_tbl[0]].path,
-				disk.am3u_fd->changee_tbl[disk.am3u_fd->slot_tbl[1]].path);
-         }
-         else
-            sprintf((char*)argv, "%s \"%s\"", "px68k", disk.am3u_fd->changee_tbl[disk.am3u_fd->slot_tbl[0]].path);
-
-         parse_cmdline(argv);
       }
    }
 
@@ -956,27 +951,62 @@ static int pmain(int argc, char *argv[])
 #endif
    DSound_Play();
 
-   /* apply defined command line settings */
-   if(argc == 3 && argv[1][0] == '-' && argv[1][1] == 'h')
-      strcpy(Config.HDImage[0], argv[2]);
-   else
-   {
-      switch (argc)
-      {
-         case 3:
-            strcpy(Config.FDDImage[1], argv[2]);
-         case 2:
-            strcpy(Config.FDDImage[0], argv[1]);
-            break;
-         case 0:
-            /* start menu when running without content */
-            menu_mode = menu_enter;
-            break;
-      }
-   }
+	if(disk.am3u){
+		// provide from M3U 
+		for(int i=0;i<disk.am3u_fd->slot_max;++i){
+			if(disk.am3u_fd->slot_tbl[i]<0)continue;
+			const AdvancedM3UMedia* media=&disk.am3u_fd->changee_tbl[disk.am3u_fd->slot_tbl[i]];
+			strncpy(Config.FDDImage[i], media->path, MAX_PATH-1);
+			Config.FDDImage[i][MAX_PATH-1]=0;
+			FDD_SetFD(i, Config.FDDImage[i], media->readonly?1:0);
 
-   FDD_SetFD(0, Config.FDDImage[0], 0);
-   FDD_SetFD(1, Config.FDDImage[1], 0);
+			if (log_cb)
+				log_cb(RETRO_LOG_INFO, "FD%u: %s%s\n",i,media->path,media->readonly?" (readonly)":"");
+		}
+		for(int i=0;i<disk.am3u_hd->slot_max;++i){
+			if(disk.am3u_hd->slot_tbl[i]<0)continue;
+			const AdvancedM3UMedia* media=&disk.am3u_hd->changee_tbl[disk.am3u_hd->slot_tbl[i]];
+			strncpy(Config.HDImage[i], media->path, MAX_PATH-1);
+			Config.HDImage[i][MAX_PATH-1]=0;
+
+			if (log_cb)
+				log_cb(RETRO_LOG_INFO, "HD%u: %s\n",i,Config.HDImage[i]);
+		}
+	}
+	else{
+		QTextRef qpath;
+		init_m3u();
+
+		/* apply defined command line settings */
+		if(argc == 3 && argv[1][0] == '-' && argv[1][1] == 'h')
+		{
+			strcpy(Config.HDImage[0], argv[2]);
+			qtext_ref_c(&qpath,Config.HDImage[0]);
+			am3u_device_add_media(am3u_get_device(disk.am3u,'H'),1,false,NULL,&qpath,NULL);
+		}
+		else
+		{
+			switch (argc)
+			{
+			 case 3:
+				strcpy(Config.FDDImage[1], argv[2]);
+				qtext_ref_c(&qpath,Config.FDDImage[1]);
+				am3u_device_add_media(am3u_get_device(disk.am3u,'F'),2,false,NULL,&qpath,NULL);
+			 case 2:
+				strcpy(Config.FDDImage[0], argv[1]);
+				qtext_ref_c(&qpath,Config.FDDImage[0]);
+				am3u_device_add_media(am3u_get_device(disk.am3u,'F'),1,false,NULL,&qpath,NULL);
+				break;
+			 case 0:
+				/* start menu when running without content */
+				menu_mode = menu_enter;
+				break;
+			}
+		}
+
+		FDD_SetFD(0, Config.FDDImage[0], 0);
+		FDD_SetFD(1, Config.FDDImage[1], 0);
+	}
 
    return 1;
 }
