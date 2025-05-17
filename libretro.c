@@ -51,6 +51,8 @@
 #include "../mk5s/quick_loader.h"
 #include "../mk5s/quick_path.h"
 
+#define CUSTOM_VERSION "+NC38"
+
 #ifdef _WIN32
 #define SLASH '\\'
 #else
@@ -1463,7 +1465,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #define PX68K_VERSION "0.15+"
 #endif
    info->library_name     = "PX68K";
-   info->library_version  = PX68K_VERSION GIT_VERSION;
+   info->library_version  = PX68K_VERSION GIT_VERSION CUSTOM_VERSION;
    info->need_fullpath    = true;
    info->valid_extensions = "dim|zip|img|d88|88d|hdm|dup|2hd|xdf|hdf|cmd|m3u";
    info->block_extract    = false;
