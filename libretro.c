@@ -1070,9 +1070,6 @@ static void retro_set_controller_descriptors(void)
    unsigned size_p1 = sizeof(input_descs_p1)/sizeof(struct retro_input_descriptor);
    unsigned size_p2 = sizeof(input_descs_p2)/sizeof(struct retro_input_descriptor);
 
-	if (log_cb)
-		log_cb(RETRO_LOG_INFO, "size_desc=%u size_p1=%u size_p2=%u\n", size_desc,size_p1,size_p2);
-
 	for(i=0;i<size_p1 && wp<size_desc;++i){
 		input_descs[wp++] = input_descs_p1[i];
 	}
