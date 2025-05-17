@@ -141,9 +141,9 @@ void FASTCALL Joystick_Update(int is_menu, int key, int port)
             ret1 ^= JOY_TRG4; 	/* Low-Punch */
          if (res & (1 << RETRO_DEVICE_ID_JOYPAD_Y))
             ret1 ^= JOY_TRG3;	/* Mid-Punch */
-         if (res & (1 << RETRO_DEVICE_ID_JOYPAD_L))
+         if (res & (1 << RETRO_DEVICE_ID_JOYPAD_Z))
             ret1 ^= JOY_TRG5;	/* High-Punch */
-         if (res & (1 << RETRO_DEVICE_ID_JOYPAD_R))
+         if (res & (1 << RETRO_DEVICE_ID_JOYPAD_C))
             ret1 ^= JOY_TRG8;	/* High-Kick */
          if (res & (1 << RETRO_DEVICE_ID_JOYPAD_START))
             ret1 ^= JOY_TRG6; /* Start */
@@ -161,9 +161,9 @@ void FASTCALL Joystick_Update(int is_menu, int key, int port)
             ret1 ^= JOY_TRG3;
          if (res & (1 << RETRO_DEVICE_ID_JOYPAD_Y))
             ret1 ^= JOY_TRG4;
-         if (res & (1 << RETRO_DEVICE_ID_JOYPAD_L))
+         if (res & (1 << RETRO_DEVICE_ID_JOYPAD_Z))
             ret1 ^= JOY_TRG8;
-         if (res & (1 << RETRO_DEVICE_ID_JOYPAD_R))
+         if (res & (1 << RETRO_DEVICE_ID_JOYPAD_C))
             ret1 ^= JOY_TRG5;
          if (res & (1 << RETRO_DEVICE_ID_JOYPAD_START))
             ret1 ^= JOY_TRG6;
