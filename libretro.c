@@ -1248,28 +1248,6 @@ static void update_variables(int running)
          Config.MenuFontSize = 1;
    }
 
-   var.key    = "px68k_save_fdd_path";
-   var.value  = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp(var.value, "disabled"))
-         Config.save_fdd_path = 0;
-      if (!strcmp(var.value, "enabled"))
-         Config.save_fdd_path = 1;
-   }
-
-   var.key    = "px68k_save_hdd_path";
-   var.value  = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp(var.value, "disabled"))
-         Config.save_hdd_path = 0;
-      if (!strcmp(var.value, "enabled"))
-         Config.save_hdd_path = 1;
-   }
-
    var.key    = "px68k_rumble_on_disk_read";
    var.value  = NULL;
 
@@ -1545,7 +1523,6 @@ void retro_init(void)
    midi_interface_init();
 
    /* set sane defaults */
-   Config.save_fdd_path = 1;
    Config.clockmhz      = 10;
    Config.ram_size      = 2 * 1024 *1024;
    Config.JOY_TYPE[0]   = 0;

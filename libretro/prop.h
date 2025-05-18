@@ -33,8 +33,6 @@ typedef struct
 	int AdjustFrameRates;
 	int AudioDesyncHack;
 	int MenuFontSize; /* font size of menu, 0 = normal, 1 = large */
-	int save_fdd_path;
-	int save_hdd_path;
 	/* Cpu clock in MHz */
 	int clockmhz;
 	/* RAM Size = size * 1024 * 1024 */
