@@ -109,6 +109,8 @@ static uint8_t Core_Key_State[RETROK_LAST];
 static uint8_t Core_old_Key_State[RETROK_LAST];
 
 static bool opt_analog;
+static int analog2mouse_left=12;
+static int analog2mouse_right=3;
 
 static char CMDFILE[512];
 
@@ -190,6 +192,8 @@ static struct retro_disk_control_ext2_callback dskcb;
 #define RETRO_DEVICE_JOYPAD_2BTN     RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 0 )
 #define RETRO_DEVICE_JOYPAD_CPSF_MD  RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 1 )
 #define RETRO_DEVICE_JOYPAD_CPSF_SFC RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 2 )
+
+static unsigned input_devices[2]={RETRO_DEVICE_JOYPAD,RETRO_DEVICE_JOYPAD};
 
 static struct retro_input_descriptor input_descs[64];
 
@@ -1075,6 +1079,8 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
    if (port >= 2)
       return;
 
+   input_devices[port]=device;
+
    switch (device)
    {
       case RETRO_DEVICE_JOYPAD_2BTN:
@@ -1194,6 +1200,22 @@ static void update_variables(int running)
          opt_analog = false;
       if (!strcmp(var.value, "enabled"))
          opt_analog = true;
+   }
+
+   var.key = "px68k_left_analog2mouse_speed";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+		analog2mouse_left=atoi(var.value);
+   }
+
+   var.key = "px68k_right_analog2mouse_speed";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+		analog2mouse_right=atoi(var.value);
    }
 
    var.key    = "px68k_adpcm_vol";
@@ -1961,6 +1983,7 @@ void retro_run(void)
 {
    int i;
    int mouse_x, mouse_y, mouse_l, mouse_r;
+   int mouse_a2x=0, mouse_a2y=0;
    bool updated    = false;
    static bool mbL = false, mbR = false;
 
@@ -2018,13 +2041,37 @@ void retro_run(void)
       WinX68k_Exec();
    }
 
-   mouse_x       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-   mouse_y       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+	switch(input_devices[0]){
+		case RETRO_DEVICE_KEYBOARD:{
+	    int32_t analog_lx, analog_ly;
+	    int32_t analog_rx, analog_ry;
+
+	    analog_lx = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
+	    analog_ly = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
+	    analog_rx = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
+	    analog_ry = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
+
+	    mouse_a2x += analog_lx*analog2mouse_left + analog_rx*analog2mouse_right;
+	    mouse_a2y += analog_ly*analog2mouse_left + analog_ry*analog2mouse_right;
+	    mouse_x = mouse_a2x>>16;
+	    mouse_y = mouse_a2y>>16;
+	    // keep moving fragments and applied in next frame 
+	    mouse_a2x -= mouse_x<<16;
+	    mouse_a2y -= mouse_y<<16;
+
+		mouse_l    = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_1);
+		mouse_r    = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_2);
+		}break;
+
+		default:
+		mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+		mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+		mouse_l    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+		mouse_r    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+		break;
+	}
 
    Mouse_Event(0, mouse_x, mouse_y);
-
-   mouse_l       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
-   mouse_r       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
 
    if(!mbL && mouse_l)
    {
