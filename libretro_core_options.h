@@ -243,29 +243,6 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "FDD1"
    },
-   {
-      "px68k_save_fdd_path",
-      "Save FDD Paths",
-      "When enabled, last loaded fdd path will be saved for each drive and then auto-loaded on startup. When disabled, FDDx starts empty.",
-      {
-         { "enabled",  NULL },
-         { "disabled", NULL },
-         { NULL,       NULL },
-      },
-      "disabled"
-   },
-
-   {
-      "px68k_save_hdd_path",
-      "Save HDD Paths",
-      "When enabled, last loaded hdd path will be saved for each drive and then auto-loaded on startup. When disabled, HDDx starts empty.",
-      {
-         { "enabled",  NULL },
-         { "disabled", NULL },
-         { NULL,       NULL },
-      },
-      "disabled"
-   },
 
    {
       "px68k_rumble_on_disk_read",

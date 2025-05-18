@@ -1292,28 +1292,6 @@ static void update_variables(int running)
          Config.joy1_select_mapping = 0;
    }
 
-   var.key    = "px68k_save_fdd_path";
-   var.value  = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp(var.value, "disabled"))
-         Config.save_fdd_path = 0;
-      if (!strcmp(var.value, "enabled"))
-         Config.save_fdd_path = 1;
-   }
-
-   var.key    = "px68k_save_hdd_path";
-   var.value  = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp(var.value, "disabled"))
-         Config.save_hdd_path = 0;
-      if (!strcmp(var.value, "enabled"))
-         Config.save_hdd_path = 1;
-   }
-
    var.key    = "px68k_rumble_on_disk_read";
    var.value  = NULL;
 
