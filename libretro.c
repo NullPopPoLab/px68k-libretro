@@ -1246,33 +1246,6 @@ static void update_variables(int running)
          Config.MenuFontSize = 1;
    }
 
-   var.key    = "px68k_joy1_select";
-   var.value  = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp(var.value, "XF1"))
-         Config.joy1_select_mapping = KBD_XF1;
-      else if (!strcmp(var.value, "XF2"))
-         Config.joy1_select_mapping = KBD_XF2;
-      else if (!strcmp(var.value, "XF3"))
-         Config.joy1_select_mapping = KBD_XF3;
-      else if (!strcmp(var.value, "XF4"))
-         Config.joy1_select_mapping = KBD_XF4;
-      else if (!strcmp(var.value, "XF5"))
-         Config.joy1_select_mapping = KBD_XF5;
-      else if (!strcmp(var.value, "F1"))
-         Config.joy1_select_mapping = KBD_F1;
-      else if (!strcmp(var.value, "F2"))
-         Config.joy1_select_mapping = KBD_F2;
-      else if (!strcmp(var.value, "OPT1"))
-         Config.joy1_select_mapping = KBD_OPT1;
-      else if (!strcmp(var.value, "OPT2"))
-         Config.joy1_select_mapping = KBD_OPT2;
-      else
-         Config.joy1_select_mapping = 0;
-   }
-
    var.key    = "px68k_save_fdd_path";
    var.value  = NULL;
 
