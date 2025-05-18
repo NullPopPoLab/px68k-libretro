@@ -113,49 +113,6 @@ struct retro_core_option_definition option_defs_us[] = {
       "disabled"
    },
    {
-      "px68k_joytype1",
-      "P1 Joypad Type",
-      "Set the joypad type for player 1.",
-      {
-         { "Default (2 Buttons)",  NULL },
-         { "CPSF-MD (8 Buttons)",  NULL },
-         { "CPSF-SFC (8 Buttons)", NULL },
-         { NULL,                   NULL },
-      },
-      "Default (2 Buttons)"
-   },
-   {
-      "px68k_joytype2",
-      "P2 Joypad Type",
-      "Set the joypad type for player 2.",
-      {
-         { "Default (2 Buttons)",  NULL },
-         { "CPSF-MD (8 Buttons)",  NULL },
-         { "CPSF-SFC (8 Buttons)", NULL },
-         { NULL,                   NULL },
-      },
-      "Default (2 Buttons)"
-   },
-   {
-      "px68k_joy1_select",
-      "P1 Joystick Select Mapping",
-      "Assigns a keyboard key to joypad's SELECT button since some games use these keys as the Start or Insert Coin buttons.",
-      {
-         { "Default", NULL },
-         { "XF1",     NULL },
-         { "XF2",     NULL },
-         { "XF3",     NULL },
-         { "XF4",     NULL },
-         { "XF5",     NULL },
-         { "OPT1",    NULL },
-         { "OPT2",    NULL },
-         { "F1",      NULL },
-         { "F2",      NULL },
-         { NULL,      NULL },
-      },
-      "Default"
-   },
-   {
       "px68k_adpcm_vol",
       "ADPCM Volume",
       "Sets the volume of the ADPCM sound channel.",
