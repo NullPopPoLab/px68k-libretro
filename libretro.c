@@ -1983,6 +1983,7 @@ void retro_run(void)
 {
    int i;
    int mouse_x, mouse_y, mouse_l, mouse_r;
+   int mouse_a2x=0, mouse_a2y=0;
    bool updated    = false;
    static bool mbL = false, mbR = false;
 
@@ -2042,16 +2043,21 @@ void retro_run(void)
 
 	switch(input_devices[0]){
 		case RETRO_DEVICE_KEYBOARD:{
-	    int16_t analog_lx, analog_ly;
-	    int16_t analog_rx, analog_ry;
+	    int32_t analog_lx, analog_ly;
+	    int32_t analog_rx, analog_ry;
 
 	    analog_lx = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
 	    analog_ly = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
 	    analog_rx = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
 	    analog_ry = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
 
-	    mouse_x = (int)(((float)analog_lx*analog2mouse_left + (float)analog_rx*analog2mouse_right) / 0x10000);
-	    mouse_y = (int)(((float)analog_ly*analog2mouse_left + (float)analog_ry*analog2mouse_right) / 0x10000);
+	    mouse_a2x += analog_lx*analog2mouse_left + analog_rx*analog2mouse_right;
+	    mouse_a2y += analog_ly*analog2mouse_left + analog_ry*analog2mouse_right;
+	    mouse_x = mouse_a2x>>16;
+	    mouse_y = mouse_a2y>>16;
+	    // keep moving fragments and applied in next frame 
+	    mouse_a2x -= mouse_x<<16;
+	    mouse_a2y -= mouse_y<<16;
 
 		mouse_l    = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_1);
 		mouse_r    = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_2);
