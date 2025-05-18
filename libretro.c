@@ -1983,7 +1983,7 @@ void retro_run(void)
 {
    int i;
    int mouse_x, mouse_y, mouse_l, mouse_r;
-   int mouse_a2x=0, mouse_a2y=0;
+   static int mouse_a2x=0, mouse_a2y=0;
    bool updated    = false;
    static bool mbL = false, mbR = false;
 
@@ -2053,8 +2053,12 @@ void retro_run(void)
 
 	    mouse_a2x += analog_lx*analog2mouse_left + analog_rx*analog2mouse_right;
 	    mouse_a2y += analog_ly*analog2mouse_left + analog_ry*analog2mouse_right;
-	    mouse_x = mouse_a2x>>16;
-	    mouse_y = mouse_a2y>>16;
+
+	    // apply moving by above 16bit values 
+	    if(mouse_a2x<0)mouse_x = -((-mouse_a2x)>>16);
+	    else mouse_x = mouse_a2x>>16;
+	    if(mouse_a2y<0)mouse_y = -((-mouse_a2y)>>16);
+	    else mouse_y = mouse_a2y>>16;
 	    // keep moving fragments and applied in next frame 
 	    mouse_a2x -= mouse_x<<16;
 	    mouse_a2y -= mouse_y<<16;
