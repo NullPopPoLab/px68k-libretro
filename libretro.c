@@ -109,6 +109,8 @@ static uint8_t Core_Key_State[RETROK_LAST];
 static uint8_t Core_old_Key_State[RETROK_LAST];
 
 static bool opt_analog;
+static int analog2mouse_left=12;
+static int analog2mouse_right=3;
 
 static char CMDFILE[512];
 
@@ -1200,6 +1202,22 @@ static void update_variables(int running)
          opt_analog = true;
    }
 
+   var.key = "px68k_left_analog2mouse_speed";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+		analog2mouse_left=atoi(var.value);
+   }
+
+   var.key = "px68k_right_analog2mouse_speed";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+		analog2mouse_right=atoi(var.value);
+   }
+
    var.key    = "px68k_adpcm_vol";
    var.value  = NULL;
 
@@ -2032,8 +2050,8 @@ void retro_run(void)
 	    analog_rx = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
 	    analog_ry = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
 
-	    mouse_x = (int)(((float)analog_lx*12 + (float)analog_rx*3) / 0x10000);
-	    mouse_y = (int)(((float)analog_ly*12 + (float)analog_ry*3) / 0x10000);
+	    mouse_x = (int)(((float)analog_lx*analog2mouse_left + (float)analog_rx*analog2mouse_right) / 0x10000);
+	    mouse_y = (int)(((float)analog_ly*analog2mouse_left + (float)analog_ry*analog2mouse_right) / 0x10000);
 
 		mouse_l    = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_1);
 		mouse_r    = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_2);
