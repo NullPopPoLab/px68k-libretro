@@ -191,6 +191,8 @@ static struct retro_disk_control_ext2_callback dskcb;
 #define RETRO_DEVICE_JOYPAD_CPSF_MD  RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 1 )
 #define RETRO_DEVICE_JOYPAD_CPSF_SFC RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 2 )
 
+static unsigned input_devices[2]={RETRO_DEVICE_JOYPAD,RETRO_DEVICE_JOYPAD};
+
 static struct retro_input_descriptor input_descs[64];
 
 static struct retro_input_descriptor input_descs_p1[] = {
@@ -1074,6 +1076,8 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 {
    if (port >= 2)
       return;
+
+   input_devices[port]=device;
 
    switch (device)
    {
@@ -2068,13 +2072,32 @@ void retro_run(void)
       WinX68k_Exec();
    }
 
-   mouse_x       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-   mouse_y       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+	switch(input_devices[0]){
+		case RETRO_DEVICE_KEYBOARD:{
+	    int16_t analog_lx, analog_ly;
+	    int16_t analog_rx, analog_ry;
+
+	    analog_lx = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
+	    analog_ly = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
+	    analog_rx = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
+	    analog_ry = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
+
+	    mouse_x = (int)(((float)analog_lx*12 + (float)analog_rx*3) / 0x10000);
+	    mouse_y = (int)(((float)analog_ly*12 + (float)analog_ry*3) / 0x10000);
+
+		mouse_l    = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_1);
+		mouse_r    = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_2);
+		}break;
+
+		default:
+		mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+		mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+		mouse_l    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+		mouse_r    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+		break;
+	}
 
    Mouse_Event(0, mouse_x, mouse_y);
-
-   mouse_l       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
-   mouse_r       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
 
    if(!mbL && mouse_l)
    {
