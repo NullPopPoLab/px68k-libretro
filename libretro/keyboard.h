@@ -19,7 +19,7 @@ void send_keycode(uint8_t code, int flag);
 int Keyboard_get_key_ptr(int x, int y);
 int Keyboard_IsSwKeyboard(void);
 
-#define	RETROK_XFX	333
+#define	RETROK_XFX	RETROK_REMOVE
 /* https://gamesx.com/wiki/doku.php?id=x68000:keycodes */
 #define	KBD_XF1		0x55
 #define	KBD_XF2		0x56
