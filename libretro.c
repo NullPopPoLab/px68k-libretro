@@ -1651,7 +1651,7 @@ static void handle_retrok(void)
       KEYP(RETROK_0 + i, 0x1 + i);
    KEYP(RETROK_0,0xb);
    KEYP(RETROK_MINUS,0xc);
-   KEYP(RETROK_COLON,0x28); /* colon : */
+   KEYP(/*RETROK_COLON*/RETROK_QUOTE,0x28); /* colon : */
    KEYP(RETROK_BACKSPACE,0xf);
 
    KEYP(RETROK_TAB,0x10);
@@ -1665,10 +1665,10 @@ static void handle_retrok(void)
    KEYP(RETROK_i,0x18);
    KEYP(RETROK_o,0x19);
    KEYP(RETROK_p,0x1A);
-   KEYP(RETROK_BACKQUOTE,0x1B);
-   KEYP(RETROK_LEFTBRACKET,0x1C);
+   KEYP(/*RETROK_AT*/RETROK_LEFTBRACKET,0x1B);
+   KEYP(/*RETROK_LEFTBRACKET*/RETROK_RIGHTBRACKET,0x1C);
    KEYP(RETROK_RETURN,0x1d);
-   KEYP(RETROK_CARET,0xd); /* caret ^ */
+   KEYP(/*RETROK_CARET*/RETROK_EQUALS,0xd); /* caret ^ */
 
    KEYP(RETROK_a,0x1e);
    KEYP(RETROK_s,0x1f);
@@ -1680,8 +1680,8 @@ static void handle_retrok(void)
    KEYP(RETROK_k,0x25);
    KEYP(RETROK_l,0x26);
    KEYP(RETROK_SEMICOLON,0x27);
-   KEYP(RETROK_BACKSLASH,0xe); /* Yen symbol ¥ */
-   KEYP(RETROK_RIGHTBRACKET,0x29);
+   KEYP(RETROK_YEN,0xe); /* Yen symbol ¥ */
+   KEYP(/*RETROK_RIGHTBRACKET*/RETROK_BACKSLASH,0x29);
 
    KEYP(RETROK_z,0x2a);
    KEYP(RETROK_x,0x2b);
@@ -1693,7 +1693,7 @@ static void handle_retrok(void)
    KEYP(RETROK_COMMA,0x31);
    KEYP(RETROK_PERIOD,0x32);
    KEYP(RETROK_SLASH,0x33);
-   KEYP(RETROK_UNDERSCORE,0x34); /* underquote _ as shift+0 which was empty, Japanese
+   KEYP(/*RETROK_UNDERSCORE*/RETROK_RCTRL,0x34); /* underquote _ as shift+0 which was empty, Japanese
                            chars can't overlap as we're not using them */
 
    KEYP(RETROK_SPACE,0x35);
@@ -1701,7 +1701,7 @@ static void handle_retrok(void)
    KEYP(RETROK_DELETE,0x37);
    KEYP(RETROK_PAGEDOWN,0x38);
    KEYP(RETROK_PAGEUP,0x39);
-   KEYP(RETROK_END,0x3a);
+   KEYP(RETROK_UNDO,0x3a);
    KEYP(RETROK_LEFT,0x3b);
    KEYP(RETROK_UP,0x3c);
    KEYP(RETROK_RIGHT,0x3d);
@@ -1729,20 +1729,20 @@ static void handle_retrok(void)
 
    KEYP(RETROK_SYMBOL,0x52); /* symbol input (kigou) */
    KEYP(RETROK_REGISTER,0x53); /* registration (touroku) */
-   KEYP(RETROK_HELP,0x54); /* help */
-   KEYP(RETROK_F11,0x55); //xf1
-   KEYP(RETROK_F12,0x56); //xf2
-   KEYP(RETROK_F13,0x57); //xf3
-   KEYP(RETROK_F14,0x58); //xf4
-   KEYP(RETROK_F15,0x59); //xf5
-   KEYP(RETROK_KANA,0x5a); //kana
+   KEYP(RETROK_END,0x54); /* help */
+   KEYP(RETROK_LALT,0x55); //xf1
+   KEYP(RETROK_DONTCONV,0x56); //xf2
+   KEYP(RETROK_CONVERT,0x57); //xf3
+   KEYP(RETROK_RALT,0x58); //xf4
+   KEYP(RETROK_COMPOSE,0x59); //xf5
+   KEYP(RETROK_KATAHIRA,0x5a); //kana
    KEYP(RETROK_ROMAN,0x5b); //romaji
    KEYP(RETROK_CODE,0x5c); //input by codes
 
    KEYP(RETROK_CAPSLOCK,0x5d);
    KEYP(RETROK_INSERT,0x5e);
    KEYP(RETROK_HIRAGANA,0x5f); //hiragana 
-   KEYP(RETROK_ZENKAKU,0x60); //zenkaku
+   KEYP(/*RETROK_ZENHAN*/RETROK_BACKQUOTE,0x60); //zenkaku
    KEYP(RETROK_BREAK,0x61); /* break */
    KEYP(RETROK_PAUSE,0x61); /* break (allow shift+break combo) */
    KEYP(RETROK_COPY,0x62); //copy
@@ -1756,8 +1756,8 @@ static void handle_retrok(void)
    KEYP(RETROK_RCTRL,0x71);
 //   KEYP(RETROK_LSUPER,0x72);
 //   KEYP(RETROK_RSUPER,0x73);
-   KEYP(RETROK_LALT,0x72); // Opt.1
-   KEYP(RETROK_RALT,0x73); // Opt.2
+   KEYP(RETROK_F11,0x72); // Opt.1
+   KEYP(RETROK_F12,0x73); // Opt.2
 }
 
 #define CLOCK_SLICE 200
