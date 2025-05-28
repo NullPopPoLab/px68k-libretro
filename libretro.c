@@ -1727,8 +1727,8 @@ static void handle_retrok(void)
    KEYP(RETROK_KP_COMMA,0x50);
    KEYP(RETROK_KP_PERIOD,0x51);
 
-   KEYP(RETROK_SYMBOL,0x52); /* symbol input (kigou) */
-   KEYP(RETROK_REGISTER,0x53); /* registration (touroku) */
+   KEYP(RETROK_MEDIA_STOP,0x52); /* symbol input (kigou) */
+   KEYP(RETROK_BROWSER_FAVORITES,0x53); /* registration (touroku) */
    KEYP(RETROK_END,0x54); /* help */
    KEYP(RETROK_LALT,0x55); //xf1
    KEYP(RETROK_DONTCONV,0x56); //xf2
@@ -1736,16 +1736,16 @@ static void handle_retrok(void)
    KEYP(RETROK_RALT,0x58); //xf4
    KEYP(RETROK_COMPOSE,0x59); //xf5
    KEYP(RETROK_KATAHIRA,0x5a); //kana
-   KEYP(RETROK_ROMAN,0x5b); //romaji
-   KEYP(RETROK_CODE,0x5c); //input by codes
+   KEYP(RETROK_MEDIA_NEXT,0x5b); //romaji
+   KEYP(RETROK_MEDIA_PREV,0x5c); //input by codes
 
    KEYP(RETROK_CAPSLOCK,0x5d);
    KEYP(RETROK_INSERT,0x5e);
-   KEYP(RETROK_HIRAGANA,0x5f); //hiragana 
+   KEYP(RETROK_MEDIA_PLAY_PAUSE,0x5f); //hiragana 
    KEYP(/*RETROK_ZENHAN*/RETROK_BACKQUOTE,0x60); //zenkaku
    KEYP(RETROK_BREAK,0x61); /* break */
    KEYP(RETROK_PAUSE,0x61); /* break (allow shift+break combo) */
-   KEYP(RETROK_COPY,0x62); //copy
+   KEYP(RETROK_LAUNCH_MAIL,0x62); //copy
 
    for(i = 0; i < 10; i++)
       KEYP(RETROK_F1 + i, 0x63 + i);
