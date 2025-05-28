@@ -1624,7 +1624,7 @@ static void rumble_frames(void)
 static void handle_retrok(void)
 {
    int i;
-   if(Core_Key_State[RETROK_PC] && Core_Key_State[RETROK_PC]!=Core_old_Key_State[RETROK_PC]  )
+   if(Core_Key_State[RETROK_SCROLLOCK] && Core_Key_State[RETROK_SCROLLOCK]!=Core_old_Key_State[RETROK_SCROLLOCK]  )
    {
       if (menu_mode == menu_out)
       {
@@ -2127,7 +2127,7 @@ void retro_run(void)
 
    /* Joypad Key for Menu */
    if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_G8))	
-      Core_Key_State[RETROK_PC] = 0x80;
+      Core_Key_State[RETROK_SCROLLOCK] = 0x80;
 
    if(memcmp( Core_Key_State,Core_old_Key_State , sizeof(Core_Key_State) ) )
       handle_retrok();
