@@ -51,7 +51,7 @@
 #include "../mk5s/quick_loader.h"
 #include "../mk5s/quick_path.h"
 
-#define CUSTOM_VERSION "+NC38"
+#define CUSTOM_VERSION "+NC41"
 
 #ifdef _WIN32
 #define SLASH '\\'
