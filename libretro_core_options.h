@@ -173,6 +173,24 @@ struct retro_core_option_definition option_defs_us[] = {
       "3"
    },
    {
+      "px68k_analog2mouse_deadzone",
+      "Stick to Mouse Friction",
+      NULL,
+      {
+         { "0", NULL },
+         { "1", NULL },
+         { "2", NULL },
+         { "3", NULL },
+         { "4", NULL },
+         { "5", NULL },
+         { "6", NULL },
+         { "7", NULL },
+         { "8", NULL },
+         { NULL,       NULL },
+      },
+      "2"
+   },
+   {
       "px68k_adpcm_vol",
       "ADPCM Volume",
       "Sets the volume of the ADPCM sound channel.",
