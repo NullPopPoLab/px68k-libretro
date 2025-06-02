@@ -111,6 +111,7 @@ static uint8_t Core_old_Key_State[RETROK_LAST];
 static bool opt_analog;
 static int analog2mouse_left=12;
 static int analog2mouse_right=3;
+static int analog2mouse_deadzone=0x2000;
 
 static char CMDFILE[512];
 
@@ -1218,6 +1219,14 @@ static void update_variables(int running)
 		analog2mouse_right=atoi(var.value);
    }
 
+   var.key = "px68k_analog2mouse_deadzone";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+		analog2mouse_deadzone=atoi(var.value)*0x1000;
+   }
+
    var.key    = "px68k_adpcm_vol";
    var.value  = NULL;
 
@@ -1983,7 +1992,7 @@ void retro_run(void)
 {
    int i;
    int mouse_x, mouse_y, mouse_l, mouse_r;
-   static int mouse_a2x=0, mouse_a2y=0;
+   static int mouse_ax=0, mouse_ay=0;
    bool updated    = false;
    static bool mbL = false, mbR = false;
 
@@ -2045,23 +2054,35 @@ void retro_run(void)
 		case RETRO_DEVICE_KEYBOARD:{
 	    int32_t analog_lx, analog_ly;
 	    int32_t analog_rx, analog_ry;
+	    int32_t mouse_mx, mouse_my;
 
 	    analog_lx = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
 	    analog_ly = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
 	    analog_rx = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
 	    analog_ry = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
 
-	    mouse_a2x += analog_lx*analog2mouse_left + analog_rx*analog2mouse_right;
-	    mouse_a2y += analog_ly*analog2mouse_left + analog_ry*analog2mouse_right;
+	    mouse_mx = analog_lx*analog2mouse_left + analog_rx*analog2mouse_right;
+	    mouse_my = analog_ly*analog2mouse_left + analog_ry*analog2mouse_right;
+
+		// deadzone 
+		if(mouse_mx>analog2mouse_deadzone)mouse_mx-=analog2mouse_deadzone;
+		else if(mouse_mx<-analog2mouse_deadzone)mouse_mx+=analog2mouse_deadzone;
+		else mouse_mx=0;
+		if(mouse_my>analog2mouse_deadzone)mouse_my-=analog2mouse_deadzone;
+		else if(mouse_my<-analog2mouse_deadzone)mouse_my+=analog2mouse_deadzone;
+		else mouse_my=0;
+
+	    mouse_ax += mouse_mx;
+	    mouse_ay += mouse_my;
 
 	    // apply moving by above 16bit values 
-	    if(mouse_a2x<0)mouse_x = -((-mouse_a2x)>>16);
-	    else mouse_x = mouse_a2x>>16;
-	    if(mouse_a2y<0)mouse_y = -((-mouse_a2y)>>16);
-	    else mouse_y = mouse_a2y>>16;
+	    if(mouse_ax<0)mouse_x = -((-mouse_ax)>>16);
+	    else mouse_x = mouse_ax>>16;
+	    if(mouse_ay<0)mouse_y = -((-mouse_ay)>>16);
+	    else mouse_y = mouse_ay>>16;
 	    // keep moving fragments and applied in next frame 
-	    mouse_a2x -= mouse_x<<16;
-	    mouse_a2y -= mouse_y<<16;
+	    mouse_ax -= mouse_x<<16;
+	    mouse_ay -= mouse_y<<16;
 
 		mouse_l    = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_1);
 		mouse_r    = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_2);
