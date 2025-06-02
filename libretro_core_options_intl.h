@@ -91,17 +91,6 @@ struct retro_core_option_definition option_def_fr[] = {
       "2MB"
    },
    {
-      "px68k_analog",
-      "Utiliser l'Analogique",
-      NULL,
-      {
-         { "désactivé", NULL },
-         { "activé",  NULL },
-         { NULL,       NULL },
-      },
-      "désactivé"
-   },
-   {
       "px68k_joytype1",
       "Type de Manette du J1",
       "Défini le type de manette du joueur 1.",

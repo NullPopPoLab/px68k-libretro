@@ -108,7 +108,13 @@ char base_dir[MAX_PATH];
 static uint8_t Core_Key_State[RETROK_LAST];
 static uint8_t Core_old_Key_State[RETROK_LAST];
 
-static bool opt_analog;
+enum{
+	ANALOG_NONE,
+	ANALOG_STICK,
+	ANALOG_MOUSE,
+};
+
+static int analog_usage=ANALOG_MOUSE;
 static int analog2mouse_left=12;
 static int analog2mouse_right=3;
 static int analog2mouse_deadzone=0x2000;
@@ -1192,15 +1198,17 @@ static void update_variables(int running)
       Config.ram_size = (value * 1024 * 1024);
    }
 
-   var.key = "px68k_analog";
+   var.key = "px68k_analog_usage";
    var.value = NULL;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (!strcmp(var.value, "disabled"))
-         opt_analog = false;
-      if (!strcmp(var.value, "enabled"))
-         opt_analog = true;
+      if (!strcmp(var.value, "Mouse"))
+         analog_usage = ANALOG_MOUSE;
+      else if (!strcmp(var.value, "Stick"))
+         analog_usage = ANALOG_STICK;
+      else 
+         analog_usage = ANALOG_NONE;
    }
 
    var.key = "px68k_left_analog2mouse_speed";
@@ -2050,8 +2058,10 @@ void retro_run(void)
       WinX68k_Exec();
    }
 
-	switch(input_devices[0]){
-		case RETRO_DEVICE_KEYBOARD:{
+
+	mouse_x=mouse_y=0;
+
+	if(analog_usage==ANALOG_MOUSE){
 	    int32_t analog_lx, analog_ly;
 	    int32_t analog_rx, analog_ry;
 	    int32_t mouse_mx, mouse_my;
@@ -2083,17 +2093,16 @@ void retro_run(void)
 	    // keep moving fragments and applied in next frame 
 	    mouse_ax -= mouse_x<<16;
 	    mouse_ay -= mouse_y<<16;
+	}
 
-		mouse_l    = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_1);
-		mouse_r    = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_2);
-		}break;
+	mouse_x += input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+	mouse_y += input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+	mouse_l  = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+	mouse_r  = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
 
-		default:
-		mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-		mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
-		mouse_l    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
-		mouse_r    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
-		break;
+	if(input_devices[0]==RETRO_DEVICE_KEYBOARD){
+		mouse_l |= input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_1);
+		mouse_r |= input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_MOUSE_2);
 	}
 
    Mouse_Event(0, mouse_x, mouse_y);

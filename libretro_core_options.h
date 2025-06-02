@@ -102,15 +102,16 @@ struct retro_core_option_definition option_defs_us[] = {
       "2MB"
    },
    {
-      "px68k_analog",
-      "Use Analog",
+      "px68k_analog_usage",
+      "Analog Stick Usage",
       NULL,
       {
-         { "disabled", NULL },
-         { "enabled",  NULL },
+         { "None",   NULL },
+         { "Stick",  NULL },
+         { "Mouse",  NULL },
          { NULL,       NULL },
       },
-      "disabled"
+      "Mouse"
    },
    {
       "px68k_left_analog2mouse_speed",
